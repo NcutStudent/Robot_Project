@@ -11,15 +11,7 @@ from socket import *
 from tcp_client import *
 from camera import *
 
-<<<<<<< HEAD:Raspberry_Pi/wire_socket.py
 server_ip = '140.128.88.166'
-=======
-if os.getuid() != 0:
-    print("this program require admin")
-    exit()
-
-server_ip = '192.168.0.138'
->>>>>>> 79f8f1c5e2539acd12da2444398f6e96b4753966:python_ffmpeg_interface/python/wire_socket.py
 server_tcp_port = 7777
 server_udp_port = 8888
 
@@ -82,9 +74,10 @@ def callback(in_data, frame_count, time_info, status):
     if len(sendBuffer) < 50:
         sendBuffer.append(in_data)
     
-    if flag and len(recieveBuffer) > 1 :
+    if flag and len(recieveBuffer) > 2 :
         del recieveBuffer[0]
         in_data = recieveBuffer[1]
+        print("play sound")
     else:
         in_data = empty_sound
     return (in_data, pyaudio.paContinue)

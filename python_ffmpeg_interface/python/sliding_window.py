@@ -24,7 +24,7 @@ class Sliding_Window:
         self.myKey = srcKey
         self.stamp = 0
         self.recv_stamp = 0
-        self.timeout = 0.02
+        self.timeout = 0.1
         self.windows = [self.IDLE] * windowSize
         self.recv_windows = [self.IDLE] * windowSize
         self.windowsTime = [0] * windowSize
@@ -36,17 +36,18 @@ class Sliding_Window:
         self.isStop = False
         thread.start_new_thread(self.thread_recv, ())
         thread.start_new_thread(self.thread_check_timeout, ())
+        self.tcp_socket.sent_data_to_server(self.socket, '\xff', self.myKey, self.ip_port)
 
     def confirm_border(self, stamp, d):
         if (stamp + len(self.windows) - 1) % 128 < stamp:
-            bot = (stamp + len(self.windows) - 1) % 128
+            bot = (stamp + len(self.windows)) % 128
             top = stamp
             if bot < d and d < top:
                 return -1
-            if stamp >= d:
+            if stamp <= d:
                 index = d - stamp
             else :
-                index = d
+                index = d + (128 - stamp)
         else :
             top = stamp + len(self.windows) - 1
             bot = stamp - 1
@@ -64,8 +65,9 @@ class Sliding_Window:
         for i in range(len(self.windows)): 
             if self.windows[i] == self.IDLE:
                 break
-        data += bytearray([self.stamp + i])
-        d = self.tcp_socket.sent_data_to_server(self.socket, data, self.myKey, self.ip_port)
+        data += bytearray([(self.stamp + i) % 128])
+        print("Send stamp " + str((self.stamp + i) % 128))
+        self.tcp_socket.sent_data_to_server(self.socket, data, self.myKey, self.ip_port)
         self.windowsTime[i] = time.time()
         self.windowsData[i] = data
         self.windows[i] = self.WAIT_FOR_RES
@@ -120,12 +122,16 @@ class Sliding_Window:
         now = time.time()
         i = 0
         for timeStamp in self.windowsTime:
+            self.lock.acquire()
             if self.windows[i] != self.WAIT_FOR_RES:
-                continue
-            if now - timeStamp > self.timeout:
+                pass
+            elif now - timeStamp > self.timeout:
+                print("time out, send " + str(int(self.windowsData[i][-1])) + " frame")
                 self.windowsTime[i] = time.time()
                 self.tcp_socket.sent_data_to_server(self.socket, self.windowsData[i], self.key, self.ip_port)
-        time.sleep(10)
+            self.lock.release()
+            i += 1
+        time.sleep(0.1)
 
     def thread_check_timeout(self):
         while not self.isStop:
@@ -151,6 +157,10 @@ class Sliding_Window:
         for o in range(i):
             del self.windows[0]
             self.windows.append(self.IDLE)
+            del self.windowsData[0]
+            self.windowsData.append(None)
+            del self.windowsTime[0]
+            self.windowsTime.append(0)
         self.idle_count += i
         self.stamp += i
         self.stamp %= 128

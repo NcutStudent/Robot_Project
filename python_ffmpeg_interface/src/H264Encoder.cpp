@@ -21,6 +21,7 @@ H264Encoder::H264Encoder(int height, int width)
         // set delay to 0
         av_opt_set(avCtx->priv_data, "preset", "superfast", 0);
         av_opt_set(avCtx->priv_data, "tune", "zerolatency", 0);
+
 		avCtx->bit_rate = 400000;
 		avCtx->height = height;
 		avCtx->width = width;

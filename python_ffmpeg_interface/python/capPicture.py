@@ -10,13 +10,14 @@ tx2Camera = 'nvcamerasrc ! video/x-raw(memory:NVMM), width=(int)640, height=(int
 
 cap = cv2.VideoCapture(tx2Camera)
 
+print("'q' to quit")
 while True:
     frame = cap.read()[1]
-    cv2.imshow('frame', frame)
-    cv2.imwrite('../test_pic/' + sys.argv[1], frame)
+    cv2.imshow('\'q\' to quit', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+cv2.imwrite('../test_pic/' + sys.argv[1], frame)
 print('your pic store at ../test_pic/' + sys.argv[1])
 cap.release()
 cv2.destroyAllWindows()

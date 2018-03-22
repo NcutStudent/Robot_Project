@@ -78,10 +78,10 @@ class Video_Capture:
 #        self.tcp_client.sent_tcp_data_to_server\
 #                    (self.socket, data.tostring(), self.RaspberryPiKey)
         flag = self.socket.send(data.tostring())
+        print("send data")
         while not flag :
             time.sleep(0.02)
-            lag = self.socket.send(data.tostring())
-        print("SEND " + str(len(data)) + " DATA")
+            flag = self.socket.send(data.tostring())
         time.sleep(0.1)
 
     def receive_frame(self) :
@@ -89,7 +89,6 @@ class Video_Capture:
             data = self.socket.getData()
             if data == None:
                 return
-            print("GET " + str(len(data)))
             if len(self.receiveBuffer) > 60:
                 return
             self.receiveBuffer.append(data)
