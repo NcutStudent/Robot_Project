@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private int serverPort = 7777;
     private int serverUdpPort = 8888;
     private int timeout = 0;
-    private String serverHost = "192.168.0.138";
+    private String serverHost = "140.128.88.166";
     private EditText passEdit = null;
     private SurfaceView surfaceView;
     final Object audioLock = new Object();
