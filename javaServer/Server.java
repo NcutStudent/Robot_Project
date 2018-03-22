@@ -482,7 +482,10 @@ class SocketProcess extends Thread{
         while(!isStop){
             try {
                 int length = istream.read(inputBuffer);
+                if(length > inputBuffer.length) 
+                    return;
                 String inputString = new String(inputBuffer, 0, length);
+                System.out.print(inputString)
                 byte[] yourPas = digest.digest(inputString.getBytes());
                 String hex = byteArrayToHexString(yourPas, yourPas.length);
                 if(passwordSet.contains(hex)){
