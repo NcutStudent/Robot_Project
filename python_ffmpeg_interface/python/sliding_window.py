@@ -2,6 +2,10 @@ import thread
 import socket
 import time
 import threading
+<<<<<<< HEAD
+import random
+=======
+>>>>>>> f6d22502d3b96deb960bb7b6c3f15229dd10536e
 
 class Sliding_Window:
     IDLE = 0
@@ -20,8 +24,12 @@ class Sliding_Window:
             ip_port = self.tcp_socket.get_sliding_ip_and_port(dstKey)
 
         self.ip_port = ip_port
+<<<<<<< HEAD
+        self.key = srcKey + ' ' + dstKey
+=======
         self.key = dstKey
         self.myKey = srcKey
+>>>>>>> f6d22502d3b96deb960bb7b6c3f15229dd10536e
         self.stamp = 0
         self.recv_stamp = 0
         self.timeout = 0.1
@@ -36,7 +44,11 @@ class Sliding_Window:
         self.isStop = False
         thread.start_new_thread(self.thread_recv, ())
         thread.start_new_thread(self.thread_check_timeout, ())
+<<<<<<< HEAD
+        self.tcp_socket.sent_data_to_server(self.socket, '\xff', self.key, self.ip_port)
+=======
         self.tcp_socket.sent_data_to_server(self.socket, '\xff', self.myKey, self.ip_port)
+>>>>>>> f6d22502d3b96deb960bb7b6c3f15229dd10536e
 
     def confirm_border(self, stamp, d):
         if (stamp + len(self.windows) - 1) % 128 < stamp:
@@ -58,6 +70,11 @@ class Sliding_Window:
         return index
 
     def send(self, data):
+<<<<<<< HEAD
+        if random.random() > 0.8:
+            return
+=======
+>>>>>>> f6d22502d3b96deb960bb7b6c3f15229dd10536e
         self.lock.acquire()
         if self.idle_count == 0 :
             self.lock.release()
@@ -67,7 +84,11 @@ class Sliding_Window:
                 break
         data += bytearray([(self.stamp + i) % 128])
         print("Send stamp " + str((self.stamp + i) % 128))
+<<<<<<< HEAD
+        self.tcp_socket.sent_data_to_server(self.socket, data, self.key, self.ip_port)
+=======
         self.tcp_socket.sent_data_to_server(self.socket, data, self.myKey, self.ip_port)
+>>>>>>> f6d22502d3b96deb960bb7b6c3f15229dd10536e
         self.windowsTime[i] = time.time()
         self.windowsData[i] = data
         self.windows[i] = self.WAIT_FOR_RES
@@ -89,7 +110,11 @@ class Sliding_Window:
         if len(data) == 1:
             self.recvATK(data)
             return
+<<<<<<< HEAD
+        self.tcp_socket.sent_data_to_server(self.socket, data[-1], self.key, self.ip_port)
+=======
         self.tcp_socket.sent_data_to_server(self.socket, data[-1], self.myKey, self.ip_port)
+>>>>>>> f6d22502d3b96deb960bb7b6c3f15229dd10536e
         index = self.confirm_border(self.recv_stamp, int(data[-1].encode('hex'), 16))
         if index == -1 :
             return
