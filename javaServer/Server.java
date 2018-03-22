@@ -150,7 +150,7 @@ class SlidingWindow extends Thread{
                     if (System.currentTimeMillis() - windowsTime.get(i) > timeout) {
                         try {
                             socket.send(windowsPacket.get(i));
-                            windows.set(i, END);
+                            windowsTime.set(i, System.currentTimeMillis());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -165,7 +165,7 @@ class SlidingWindow extends Thread{
                 int min = (stamp + windows.size()) % 128;
                 int top = stamp;
                 if(min < d && d < top ) {
-                    System.out.println("ERROR stamp");
+                    System.out.println("ERROR stamp: " + d);
                     return -1;
                 }
                 if (stamp <= d) {
@@ -177,7 +177,7 @@ class SlidingWindow extends Thread{
                 int top = stamp + windows.size() - 1;
                 int min = stamp - 1;
                 if(d < min || top < d) {
-                    System.out.println("ERROR stamp");
+                    System.out.println("ERROR stamp: " + d);
                     return -1;
                 }
                 index = d - stamp;
@@ -485,7 +485,7 @@ class SocketProcess extends Thread{
                 if(length > inputBuffer.length) 
                     return;
                 String inputString = new String(inputBuffer, 0, length);
-                System.out.print(inputString)
+                System.out.print(inputString);
                 byte[] yourPas = digest.digest(inputString.getBytes());
                 String hex = byteArrayToHexString(yourPas, yourPas.length);
                 if(passwordSet.contains(hex)){
