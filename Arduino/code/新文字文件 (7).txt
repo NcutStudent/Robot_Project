@@ -1,0 +1,45 @@
+#include <TimerOne.h>
+int sec=0;
+const byte  seg[10]=
+{
+   B1111110,
+   B0110000,
+   B1101101,
+   B1111001,
+   B0110011,
+   B1011011,
+   B1011111,
+   B1110000,
+   B1111111,
+   B1111011  
+};
+void setup() 
+{
+      DDRA = B1111111;
+      DDRC = B1111;
+      Timer1.initialize(1000000);
+      Timer1.attachInterrupt(callback);   
+      PORTC= 1101;
+}
+ 
+void loop()
+{
+          PORTC= 14;
+          PORTA = seg[(i%100)%10];
+          delay(2);
+          PORTC= 13;
+          PORTA = seg[(i%100)/10];
+          delay(2);
+          PORTC= 11;
+          PORTA = seg[(i/100)%10];
+          delay(2);
+          PORTC= 7;
+          PORTA = seg[(i/100)/10];
+          delay(2);
+
+          if(i>9999) i=0;
+}
+void callback()                        
+{                        
+    sec++;
+}

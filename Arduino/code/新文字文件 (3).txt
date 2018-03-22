@@ -1,0 +1,28 @@
+int a=0;
+void setup() 
+{
+      DDRA = B0111;
+    //  pinMode(25, INPUT);
+      PORTA = a;
+}
+    
+
+void loop() 
+{
+ /*  //   boolean val = digitalRead(25);
+   /   if(!val)
+    //  {        
+          delay(300);
+          if(a<7)
+            a++;
+          else
+            a=0;  
+      }
+      PORTA = a;*/
+    
+    for(int a=0;a<8;a++)
+    {
+        PORTA = a;
+        delay(500);
+    }
+}

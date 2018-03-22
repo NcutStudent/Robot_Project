@@ -1,0 +1,115 @@
+#include <TimerOne.h>
+char outputBuffer[256] = { 0 };
+int outputBufferStart = 0;
+int outputBufferEnd = 0;
+
+char GetCharFromQueue() {
+    char res = outputBuffer[outputBufferStart];
+    ++outputBufferStart;
+    outputBufferStart %= 256;
+    return res;
+}
+
+bool SaveCharToQueue(char c) {
+    outputBuffer[outputBufferEnd] = c;
+    ++outputBufferEnd;
+    outputBufferEnd %= 256;
+    return true;
+}
+
+int counter = 0;
+int arpPin = 6;
+int serialPin[] = { 2, 3, 4, 5};
+int arpOutPin = 8;
+int serialOutPin[] = {12, 11, 10, 9};
+int arpState;
+int arpOutState;
+char tmp;
+
+TimerOne EOFTimer;
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  pinMode(arpPin, INPUT);
+  pinMode(arpOutPin, OUTPUT);
+  for(int index = 0; index < 4; ++index) {
+    pinMode(serialPin[index], INPUT);
+    pinMode(serialOutPin[index], OUTPUT);
+  }
+  arpState = digitalRead(arpPin);
+  tmp = 0;
+  digitalWrite(arpOutPin, LOW);
+  arpOutState = LOW;
+  Timer1.initialize(100000);
+  Timer1.attachInterrupt(empty);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  if(arpState != digitalRead(arpPin)) {
+      arpState = digitalRead(arpPin);
+      for(int index = 0; index < 4; ++index) {
+          tmp <<= 1;
+          tmp += digitalRead(serialPin[index]);
+      }
+      ++counter;
+      if(counter == 2) {
+          if(tmp == 0) {
+              Serial.println();
+              counter = 0;
+              return;
+          }
+          Serial.print(tmp);
+          tmp = 0;
+          counter = 0;
+      }
+  }
+
+  
+  char str = Serial.read();
+  if(str != -1) {
+    //Serial.println(str);
+    SaveCharToQueue(str);
+    Timer1.attachInterrupt(CallBack);
+  }
+}
+char outputTmp;
+int outputCounter = 0;
+void CallBack() {
+    if(outputCounter % 2 == 0) {
+        outputCounter = 0;
+        outputTmp = GetCharFromQueue();
+        //Serial.println(outputTmp);
+        if(outputTmp == 0) {
+            Timer1.attachInterrupt(SendEOF);
+            return;
+        }
+    }
+    ++outputCounter;
+    for(int index = 0; index < 4; ++index) {
+        digitalWrite(serialOutPin[index], outputTmp & -128);
+        outputTmp <<= 1;
+    }
+    arpOutState = (arpOutState == HIGH) ? LOW : HIGH; 
+    digitalWrite(arpOutPin, arpOutState);
+}
+
+void empty(){
+    
+}
+
+int EOFCounter = 0;
+void SendEOF() {
+    if(EOFCounter == 2) {
+        Timer1.attachInterrupt(empty);
+        EOFCounter = 0;
+    }
+    ++EOFCounter;
+    for(int index = 0; index < 4; ++index) {
+        digitalWrite(serialOutPin[index], LOW);
+    }
+    arpOutState = (arpOutState == HIGH) ? LOW : HIGH; 
+    digitalWrite(arpOutPin, arpOutState);
+}
+
+

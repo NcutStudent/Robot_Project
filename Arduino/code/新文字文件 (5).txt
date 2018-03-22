@@ -1,0 +1,27 @@
+int a;
+void setup() 
+{
+      DDRA = B111;
+      PORTA = a;
+      Serial.begin(9600);
+}
+    
+
+void loop() 
+{
+  //   Serial.println(a);
+    if(Serial.available()>0)
+    {
+        a=Serial.parseInt();
+        if(a<8)
+        {
+             Serial.println(a);
+             PORTA = a;
+        }
+        else
+        {
+             Serial.println("Enter Error !!");
+        }
+    }
+
+}

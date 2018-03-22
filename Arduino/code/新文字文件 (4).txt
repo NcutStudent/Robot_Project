@@ -1,0 +1,26 @@
+byte val=0;
+int potvalue=0; 
+void setup() 
+{
+    pinMode(11,OUTPUT);
+}
+    
+
+void loop() 
+{
+   /*    potvalue = analogRead(A0);
+       val = map(potvalue,0,1023,0,255);
+       analogWrite(11,val); 
+  //why 16 11都是pwm  卻一個ok 一個不ok*/
+       for(int a=0;a<256;a++)
+       {
+            analogWrite(11,a);
+            delay(20);
+       }
+
+        for(int a=255;a>=0;a--)
+       {
+            analogWrite(11,a);
+            delay(20);
+       }
+}

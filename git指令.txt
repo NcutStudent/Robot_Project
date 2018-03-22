@@ -1,0 +1,18 @@
+假設github沒更新
+
+git add -A
+
+git commit -m "updata"
+
+git push origin master
+
+
+假設github有更新，如果出現 [rejected] 錯誤的話
+
+git pull
+
+git add -A
+
+git commit -m "updata"
+
+git push origin master

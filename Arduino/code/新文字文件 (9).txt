@@ -1,0 +1,58 @@
+#include <TimerOne.h>
+int i=0;
+int a=0;
+const byte  seg[10]=
+{
+   B1111110,
+   B0110000,
+   B1101101,
+   B1111001,
+   B0110011,
+   B1011011,
+   B1011111,
+   B1110000,
+   B1111111,
+   B1111011  
+};
+void setup() 
+{
+      DDRA = B1111111;
+      DDRC = B1111;
+      Serial.begin(9600);
+}
+ 
+void loop()
+{
+          if(Serial.available()>0)
+          {
+              a=Serial.parseInt();
+              if(a>9999)
+              {
+                  Serial.print("Enter Error :");
+                  Serial.println(i);
+              }        
+              else if(a<=9999 && a>=0)
+              {
+                   i=a; 
+                   Serial.print("Yes :");
+                   Serial.println(i);
+              }
+          }
+
+ 
+
+
+          PORTC= 14;
+          PORTA = seg[(i%100)%10];
+          delay(2);
+          PORTC= 13;
+          PORTA = seg[(i%100)/10];
+          delay(2);
+          PORTC= 11;
+          PORTA = seg[(i/100)%10];
+          delay(2);
+          PORTC= 7;
+          PORTA = seg[(i/100)/10];
+          delay(2); 
+  
+}

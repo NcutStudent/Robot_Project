@@ -1,0 +1,11 @@
+https://github.com/googlesamples/android-Camera2Basic/blob/master/Application/src/main/java/com/example/android/camera2basic/Camera2BasicFragment.java
+
+
+https://github.com/googlesamples/android-Camera2Basic
+
+
+http://wiki.jikexueyuan.com/project/android-actual-combat-skills/android-hardware-camera2-operating-guide.html
+
+
+http://www.jcodecraeer.com/a/anzhuokaifa/androidkaifa/2015/0428/2811.html
+
