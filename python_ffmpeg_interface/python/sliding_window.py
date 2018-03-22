@@ -20,8 +20,7 @@ class Sliding_Window:
             ip_port = self.tcp_socket.get_sliding_ip_and_port(dstKey)
 
         self.ip_port = ip_port
-        self.key = dstKey
-        self.myKey = srcKey
+        self.key = srcKey + ' ' + dstKey
         self.stamp = 0
         self.recv_stamp = 0
         self.timeout = 0.1
@@ -36,7 +35,7 @@ class Sliding_Window:
         self.isStop = False
         thread.start_new_thread(self.thread_recv, ())
         thread.start_new_thread(self.thread_check_timeout, ())
-        self.tcp_socket.sent_data_to_server(self.socket, '\xff', self.myKey, self.ip_port)
+        self.tcp_socket.sent_data_to_server(self.socket, '\xff', self.key, self.ip_port)
 
     def confirm_border(self, stamp, d):
         if (stamp + len(self.windows) - 1) % 128 < stamp:
@@ -67,7 +66,7 @@ class Sliding_Window:
                 break
         data += bytearray([(self.stamp + i) % 128])
         print("Send stamp " + str((self.stamp + i) % 128))
-        self.tcp_socket.sent_data_to_server(self.socket, data, self.myKey, self.ip_port)
+        self.tcp_socket.sent_data_to_server(self.socket, data, self.key, self.ip_port)
         self.windowsTime[i] = time.time()
         self.windowsData[i] = data
         self.windows[i] = self.WAIT_FOR_RES
@@ -89,7 +88,7 @@ class Sliding_Window:
         if len(data) == 1:
             self.recvATK(data)
             return
-        self.tcp_socket.sent_data_to_server(self.socket, data[-1], self.myKey, self.ip_port)
+        self.tcp_socket.sent_data_to_server(self.socket, data[-1], self.key, self.ip_port)
         index = self.confirm_border(self.recv_stamp, int(data[-1].encode('hex'), 16))
         if index == -1 :
             return

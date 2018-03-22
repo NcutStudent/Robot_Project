@@ -20,7 +20,7 @@ class Video_Capture:
 #        while self.Host == 'null' or self.Port == 0:
 #            self.Host, self.Porttcp_client.get_client_recv_ip_and_port()
 #            time.sleep(1)
-        self.socket = sliding_window.Sliding_Window(tcp_client, 10, self.RaspberryPiKey, self.RaspberryPiKey)
+        self.socket = sliding_window.Sliding_Window(tcp_client, 10, self.RaspberryPiKey, self.PhoneKey)
         self.cap = cv2.VideoCapture(tx2Camera)
         ret, frame = self.cap.read()
         if ret == False:
