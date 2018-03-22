@@ -80,4 +80,18 @@ public class TCP_Connect {
         }
         return socket;
     }
+
+    public String getSlidingIp_Port(String key) {
+        try {
+            if (socket == null)
+                return "";
+            String str = token + " w " + key;
+            DatagramPacket pk = new DatagramPacket(str.getBytes(), str.getBytes().length, serverIp, serverUdpPort);
+            socket.send(pk);
+            socket.receive(pk);
+            return new String(pk.getData(), 0, pk.getLength());
+        }catch (IOException e) {
+            return "0.0.0.0 0";
+        }
+    }
 }

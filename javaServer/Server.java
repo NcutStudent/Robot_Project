@@ -20,7 +20,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 class Data_Set{
-    public static final String MY_IP = "140.128.88.166";
+    public static final String MY_IP = "192.168.0.138";
 }
 
 class SlidingWindow extends Thread{
@@ -250,25 +250,34 @@ class SlidingWindow extends Thread{
                         socket.receive(pk);
 
                         byte[]  pk_data = pk.getData();
-                        int pk_length = pk.getLength();
+                        int pk_length;
                         String token[] = new String(pk_data, 0, SocketProcess.PasswordLength() + 128).split(" ");
-                        if(token.length < 2){
+                        if(token.length < 3){
                             continue;
                         }
                         Map<String, String> set = TimeLimitMap.getData_Set(token[0]);
                         if(set == null){
                             continue;
                         }
-                        String set_data = set.get(token[1]);
+                        String set_data = set.get(token[2]);
                         if(set_data == null) {
                             continue;
                         }
-                        Window window = windowMap.get(token[1]);
+                        String check = set.get(token[1]);
+                        if(check == null) {
+                            continue;
+                        }
+                        Window window = windowMap.get(token[2]);
                         if(window == null) {
                             window = new Window(windowSize, timeout);
-                            windowMap.put(token[1], window);
+                            windowMap.put(token[2], window);
                         }
-                        int offset = token[0].length() + token[1].length() + 2;
+                        Window srcwindow = windowMap.get(token[1]);
+                        if(srcwindow == null) {
+                            srcwindow = new Window(windowSize, timeout);
+                            windowMap.put(token[1], srcwindow);
+                        }
+                        int offset = token[0].length() + token[1].length() + token[2].length() + 3;
                         if(pk.getLength() - offset == 1) {
                             window.recvATK(pk);
                             continue;
@@ -282,9 +291,10 @@ class SlidingWindow extends Thread{
                             continue;
                         pk_length = _pk.getLength();
                         pk_length -= offset;
-                        socket.send(
-                                window.pktData(_pk.getData(), offset, pk_length, InetAddress.getByName(ipAndPort[0]), Integer.valueOf(ipAndPort[1]))
-                        );
+                        DatagramPacket p = srcwindow.pktData(_pk.getData(), offset, pk_length, InetAddress.getByName(ipAndPort[0]), Integer.valueOf(ipAndPort[1]));
+                        if(p == null)
+                            continue;
+                        socket.send(p);
 
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -482,7 +492,7 @@ class SocketProcess extends Thread{
         while(!isStop){
             try {
                 int length = istream.read(inputBuffer);
-                if(length > inputBuffer.length) 
+                if(length > inputBuffer.length)
                     return;
                 String inputString = new String(inputBuffer, 0, length);
                 System.out.print(inputString);
