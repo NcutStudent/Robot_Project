@@ -1,7 +1,10 @@
 package com.example.dickman.myapplication;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
@@ -9,6 +12,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -20,6 +24,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.dickman.myapplication.network.TCP_Connect;
+import com.example.dickman.myapplication.service.PhoneAnswerListener;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -33,10 +38,10 @@ public class MainActivity extends AppCompatActivity {
     final String PhoneVideoKey = "VideoPhone";
     final String RaspberryVideoKey = "VideoRaspberry";
 
-    private int serverPort = 7777;
-    private int serverUdpPort = 8888;
-    private int timeout = 0;
-    private String serverHost = "140.128.88.166";
+    public static final int serverPort = 7777;
+    public static final int serverUdpPort = 8888;
+    public static final int timeout = 0;
+    public static final String serverHost = "120.105.81.69";
     private EditText passEdit = null;
     private SurfaceView surfaceView;
     final Object audioLock = new Object();
@@ -44,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
     VideoThread video = null;
     CameraDevice cameraDevice = null;
     TCP_Connect tcp_connect;
+    PhoneAnswerListener phoneAnswerListener;
+
+    boolean isServiceConnected = false;
 
     private class PacketClass implements Serializable {
         public DatagramSocket socket;
@@ -84,6 +92,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            PhoneAnswerListener.LocalBinder binder = (PhoneAnswerListener.LocalBinder) service;
+            phoneAnswerListener = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+
+        }
+    };
+
     private MyHandler mHandler = new MyHandler(this);
 
     @Override
@@ -93,6 +117,10 @@ public class MainActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         passEdit = findViewById(R.id.editText);
         surfaceView = findViewById(R.id.image);
+        Intent intent = new Intent(this, PhoneAnswerListener.class);
+        if(!isServiceConnected) {
+            isServiceConnected = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        }
         if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO}, 0);
@@ -155,6 +183,14 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             tcp_connect = new TCP_Connect(serverHost, serverPort, serverUdpPort);
                             if (tcp_connect.inputPassword(password)) {
+                                //TODO
+                                getSharedPreferences("settings", MODE_PRIVATE).edit()
+                                        .putString("password", password)
+                                        .apply();
+                                if(phoneAnswerListener != null) {
+                                    phoneAnswerListener.restartListening(password);
+                                }
+
                                 PacketClass packetClass = getSetting(tcp_connect, PhoneKey, RaspberryKey);
                                 Message msg = new Message();
                                 Bundle bundle = new Bundle();
