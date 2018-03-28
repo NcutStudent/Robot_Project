@@ -1,4 +1,4 @@
-package com.example.dickman.myapplication;
+package com.example.dickman.myapplication.network;
 
 import android.util.Log;
 
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-class SlidingWindow extends Thread{
+public class SlidingWindow extends Thread{
     class Window {
         private static final int IDLE = 0;
         private static final int WAIT_FOR_RES = 1;

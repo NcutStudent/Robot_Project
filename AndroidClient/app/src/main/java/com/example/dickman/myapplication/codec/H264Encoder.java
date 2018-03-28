@@ -1,4 +1,4 @@
-package com.example.dickman.myapplication;
+package com.example.dickman.myapplication.codec;
 
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;

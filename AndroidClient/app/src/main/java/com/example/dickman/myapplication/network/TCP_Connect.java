@@ -1,4 +1,4 @@
-package com.example.dickman.myapplication;
+package com.example.dickman.myapplication.network;
 
 import java.io.IOException;
 import java.io.InputStream;

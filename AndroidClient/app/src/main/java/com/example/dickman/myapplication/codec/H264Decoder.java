@@ -1,4 +1,4 @@
-package com.example.dickman.myapplication;
+package com.example.dickman.myapplication.codec;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -18,7 +18,7 @@ public class H264Decoder extends  Thread {
     MediaCodec mediaCodec;
     int bufferSize = 10;
     final List<byte[]> imageByteBuffer = new LinkedList<>();
-    H264Decoder(Surface surface) throws IOException {
+    public H264Decoder(Surface surface) throws IOException {
         final MediaFormat mediaFormat = MediaFormat.createVideoFormat("video/avc", 640, 480);
 
         mediaCodec = MediaCodec.createDecoderByType("video/avc");
