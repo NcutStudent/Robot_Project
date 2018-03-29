@@ -26,6 +26,7 @@ public class H264Encoder extends MediaCodec.Callback{
     private CameraDevice cameraDevice;
     private int offset;
     private final List<byte[]> byteBuffers = new LinkedList<>();
+    boolean isRunning = false;
 
     class MyCameraCaptureSessionCallBack extends CameraCaptureSession.StateCallback{
 
@@ -68,6 +69,7 @@ public class H264Encoder extends MediaCodec.Callback{
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         surface = mediaCodec.createInputSurface();
         mediaCodec.start();
+        isRunning = true;
 
 
         try {
@@ -113,5 +115,8 @@ public class H264Encoder extends MediaCodec.Callback{
                 return byteBuffers.remove(0);
             return null;
         }
+    }
+    synchronized public void stopEncoding() {
+        mediaCodec.stop();
     }
 }

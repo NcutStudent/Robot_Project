@@ -17,6 +17,7 @@ import java.util.List;
 public class H264Decoder extends  Thread {
     MediaCodec mediaCodec;
     int bufferSize = 10;
+    boolean isRunning = false;
     final List<byte[]> imageByteBuffer = new LinkedList<>();
     public H264Decoder(Surface surface) throws IOException {
         final MediaFormat mediaFormat = MediaFormat.createVideoFormat("video/avc", 640, 480);
@@ -25,12 +26,13 @@ public class H264Decoder extends  Thread {
         mediaCodec.configure(mediaFormat, surface, null, 0);
         mediaCodec.start();
         this.start();
+        isRunning = true;
     }
 
     @Override
     public void run() {
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-        for (; ; ) {
+        for (;isRunning ; ) {
             if (imageByteBuffer.size() == 0) {
                 continue;
             }
@@ -65,5 +67,9 @@ public class H264Decoder extends  Thread {
         synchronized (imageByteBuffer) {
             imageByteBuffer.add(bytes);
         }
+    }
+
+    synchronized public void stopDecoding() {
+        isRunning = false;
     }
 }

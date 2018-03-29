@@ -4,18 +4,31 @@ import android.app.IntentService;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.example.dickman.myapplication.MainActivity;
 import com.example.dickman.myapplication.R;
+import com.example.dickman.myapplication.broadcast.PhoneBroadCastListener;
 import com.example.dickman.myapplication.network.TCP_Connect;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.sql.Time;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by HatsuneMiku on 2018/3/28.
@@ -23,12 +36,47 @@ import java.net.DatagramSocket;
 
 public class PhoneAnswerListener extends Service {
     private final IBinder mBinder = new LocalBinder();
-    public static final byte ON_PHONE_CALL = 0x42;
-    TCP_Connect tcp_connect;
-    String password, socketId;
-    MyThread listeningThread = null;
 
-    class MyThread extends Thread {
+    public static final byte ON_PHONE_CALL = 0x42;
+    public static final byte ALIVE_CALL = 0x53;
+    public static final byte HANG_UP_CALL = 0x21;
+
+    TCP_Connect tcp_connect = null;
+    DatagramSocket socket = null;
+    String password, listenSocketId = "phoneListenSocket", sendSocketId = "raspberryListenSocket";
+    InetAddress ip;
+    int port;
+    ServiceMainThread listeningThread = null;
+    boolean haveCall = false;
+    boolean isCalling = false;
+    boolean answerCall = false;
+    boolean hangUpCall = false;
+    boolean initFinish  = false;
+    boolean passwordError = false;
+    long soTimeout = 20000;
+
+
+    class TimeOutThread extends Thread{
+        long soTimeout;
+        Runnable runnable;
+        public TimeOutThread(long soTimeout, Runnable runnable){
+            this.soTimeout = soTimeout;
+        }
+        @Override
+        public void run() {
+            try {
+                sleep(soTimeout);
+
+                if(runnable != null) {
+                    runnable.run();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    class ServiceMainThread extends Thread {
         boolean isRunning = false;
 
         @Override
@@ -40,27 +88,111 @@ public class PhoneAnswerListener extends Service {
         @Override
         public void run() {
 
-            try {
-                tcp_connect = new TCP_Connect(MainActivity.serverHost, MainActivity.serverPort, MainActivity.serverUdpPort);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            tcp_connect.inputPassword(password);
-            DatagramSocket socket = tcp_connect.getUdpSocket(socketId);
-            byte b[] = new byte[1];
-            DatagramPacket pk = new DatagramPacket(b, b.length);
-            for (;isRunning;) {
+            if(tcp_connect == null) {
                 try {
-                    socket.receive(pk);
-                    if (b[0] == ON_PHONE_CALL) {
-                        Intent onPhoneCallIntent = new Intent();
-                        onPhoneCallIntent.setAction(getString(R.string.on_phone_call));
-                        sendBroadcast(onPhoneCallIntent);
-                    }
+                    tcp_connect = new TCP_Connect(MainActivity.serverHost, MainActivity.serverPort, MainActivity.serverUdpPort);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+            if(tcp_connect.inputPassword(password)) {
+                initFinish = true;
+                do {
+                    String ip_port[] = tcp_connect.getSocketIpPort(sendSocketId).split(" ");
+                    try {
+                        ip = InetAddress.getByName(ip_port[0]);
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                    port = Integer.valueOf(ip_port[1]);
+                } while(port == 0);
+
+                socket = tcp_connect.getUdpSocket(listenSocketId);
+                byte b[] = new byte[200];
+                int offset = tcp_connect.getToken().length() + sendSocketId.length() + 2;
+                System.arraycopy(tcp_connect.getToken().getBytes(), 0, b, 0, tcp_connect.getToken().length());
+                b[tcp_connect.getToken().length()] = ' ';
+                System.arraycopy(sendSocketId.getBytes(), 0, b, tcp_connect.getToken().length() + 1, sendSocketId.length());
+                b[offset - 1] = ' ';
+                DatagramPacket icmp = new DatagramPacket(b, offset + 1, ip, port);
+                DatagramPacket pk = new DatagramPacket(b, offset, b.length - offset);
+                int loseConnectionCount = 0;
+                for (; isRunning; ) {
+                    try {
+                        if(hangUpCall) {
+                            b[offset] = HANG_UP_CALL;
+                            socket.send(icmp);
+                            isCalling = false;
+                            haveCall = false;
+                            answerCall = false;
+                            hangUpCall = false;
+                        }
+                        else if(isCalling) {
+                            b[offset] = ON_PHONE_CALL;
+                            socket.send(icmp);
+                            socket.receive(pk);
+                            if(pk.getLength() > 1) {
+                                continue;
+                            }
+                            if(b[offset] == ALIVE_CALL || b[offset] == ON_PHONE_CALL) {
+                                isCalling = false;
+                                answerCall = true;
+                                Intent intent = new Intent();
+                                intent.setAction(getString(R.string.answer_call));
+                                sendBroadcast(intent);
+                            }
+                        } else if (answerCall) {
+                            if(loseConnectionCount > 2) {
+                                hangUpCall = true;
+                                answerCall = false;
+                                loseConnectionCount = 0;
+                                Intent missConnectionIntent = new Intent();
+                                missConnectionIntent.setAction(getString(R.string.miss_connection));
+                                sendBroadcast(missConnectionIntent);
+                                continue;
+                            }
+                            b[offset] = ALIVE_CALL;
+                            socket.send(icmp);
+                            long theTime = System.currentTimeMillis();
+                            loseConnectionCount += 1;
+                            socket.receive(pk);
+                            if(pk.getLength() > 1) {
+                                continue;
+                            }
+                            theTime = 1000 - theTime;
+                            if(theTime > 0)
+                                Thread.sleep(theTime);
+                            loseConnectionCount = 0;
+                        } else {
+                            socket.receive(pk);
+                            if(pk.getLength() > 1) {
+                                continue;
+                            }
+                            if(b[offset] == ALIVE_CALL && !answerCall){
+                                icmp.setAddress(ip);
+                                icmp.setPort(port);
+                                b[offset] = HANG_UP_CALL;
+                                socket.send(icmp);
+                                haveCall = false;
+                            } else if(b[offset] == HANG_UP_CALL) {
+                                hangUpCall = true;
+                            }
+                             else if (!haveCall && b[offset] == ON_PHONE_CALL) {
+                                Intent onPhoneCallIntent = new Intent();
+                                onPhoneCallIntent.setAction(getString(R.string.on_phone_call));
+                                sendBroadcast(onPhoneCallIntent);
+                                synchronized (PhoneAnswerListener.this) {
+                                    haveCall = true;
+                                }
+                            }
+                        }
+                    } catch (IOException | InterruptedException ignored) {}
+                }
+            } else {
+                passwordError = true;
+                initFinish = true;
+            }
+            isRunning = false;
         }
 
         synchronized void stopRunning() {
@@ -75,12 +207,43 @@ public class PhoneAnswerListener extends Service {
     }
 
     public synchronized void restartListening(String password) {
+        if(password.equals(this.password)){
+            return;
+        }
         this.password = password;
         if(listeningThread != null) {
             listeningThread.stopRunning();
         }
-        listeningThread = new MyThread();
+        listeningThread = new ServiceMainThread();
         listeningThread.start();
+        initFinish = false;
+        passwordError = false;
+    }
+
+    public void answerPhoneCall(boolean answer) {
+        if(socket != null && haveCall) {
+            if(answer) {
+                answerCall = true;
+            } else {
+                hangUpCall = true;
+            }
+        }
+    }
+
+    public void makeACall() {
+        isCalling = true;
+    }
+
+    public boolean isInit() {
+        return initFinish;
+    }
+
+    public boolean isPasswordError() {
+        return passwordError;
+    }
+
+    public TCP_Connect getTCP_Client() {
+        return tcp_connect;
     }
 
     @Override
@@ -89,13 +252,12 @@ public class PhoneAnswerListener extends Service {
 
         SharedPreferences settings = getSharedPreferences("settings", Context.MODE_PRIVATE);
         password = settings.getString("password", "");
-        socketId = settings.getString("socketId", "phoneListenSocket");
 
-        if(password.equals("") || listeningThread != null) {
+        if(password.equals("") || (listeningThread != null && listeningThread.isRunning)) {
             return ;
         }
 
-        listeningThread = new MyThread();
+        listeningThread = new ServiceMainThread();
         listeningThread.start();
     }
 
