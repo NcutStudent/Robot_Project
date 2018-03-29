@@ -20,7 +20,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 class Data_Set{
-    public static final String MY_IP = "192.168.0.138";
+    public static final String MY_IP = "140.128.88.166";
 }
 
 class SlidingWindow extends Thread{
