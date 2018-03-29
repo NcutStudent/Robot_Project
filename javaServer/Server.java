@@ -20,7 +20,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 class Data_Set{
-    public static final String MY_IP = "140.128.88.166";
+    public static final String MY_IP = "192.168.0.138";
 }
 
 class SlidingWindow extends Thread{
@@ -510,6 +510,9 @@ class SocketProcess extends Thread{
                     isStop = true;
                 } else {
                     ostream.write("password error".getBytes());
+
+                    socket.close();
+                    isStop = true;
                 }
             } catch (IOException e) {
                 isStop = true;
@@ -585,11 +588,12 @@ class UDP_Server extends Thread { // Client set/get port
             if(data.length != 3) {
                 continue;
             }
-            Map<String, String> set = TimeLimitMap.getData_Set(data[0]);
-            if(set == null) {
+            if(!data[1].equals("s") && !data[1].equals("g") && !data[1].equals("t") && !data[1].equals("w")) {
+                new Transfer_UDP(pk, socket).start();
                 continue;
             }
-            if(!data[1].equals("s") && !data[1].equals("g") && !data[1].equals("t") && !data[1].equals("w")){
+            Map<String, String> set = TimeLimitMap.getData_Set(data[0]);
+            if(set == null) {
                 continue;
             }
 
@@ -666,13 +670,10 @@ class Transfer_UDP extends Thread {
 
     @Override
     public void run() {
-        if(pk.getLength() < 128) {
-            return;
-        }
         byte[]  pk_data = pk.getData();
         int pk_length = pk.getLength();
         String token[] = new String(pk_data, 0, SocketProcess.PasswordLength() + 128).split(" ");
-        if(token.length < 2){
+        if(token.length < 3){
             return;
         }
         Map<String, String> set = TimeLimitMap.getData_Set(token[0]);
