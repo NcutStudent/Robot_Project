@@ -25,6 +25,7 @@ public class VideoThread extends Thread {
     String token;
     String raspberryKey = "VideoRaspberry";
     String phonekey = "VideoPhone";
+    boolean isRunning = false;
     public VideoThread(TCP_Connect tcp_connect, CameraDevice device, Surface outputSurface, int width, int height) {
         this.token = tcp_connect.getToken();
         final DatagramSocket socket = tcp_connect.getUdpSocket(phonekey);
@@ -74,7 +75,7 @@ public class VideoThread extends Thread {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                for(;;) {
+                for(;isRunning;) {
                     byte[] data = slidingWindow.getData();
                     if(data != null) {
                         h264Decoder.decodeByte(data);
@@ -83,11 +84,12 @@ public class VideoThread extends Thread {
             }
         }).start();
         this.start();
+        isRunning = true;
     }
 
     @Override
     public void run() {
-        for(;;) {
+        for(;isRunning;) {
             byte[] data = h264Encoder.getEncodeedImage();
             if(data == null)
                 continue;
@@ -103,5 +105,9 @@ public class VideoThread extends Thread {
                 e.printStackTrace();
             }
         }
+    }
+    synchronized void stopRunning() {
+        isRunning = false;
+        slidingWindow.stopRunning();
     }
 }

@@ -297,4 +297,8 @@ public class SlidingWindow extends Thread{
             }
         }
     }
+
+    public void stopRunning() {
+        isStop = true;
+    }
 }
