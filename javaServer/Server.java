@@ -495,7 +495,7 @@ class SocketProcess extends Thread{
                 if(length > inputBuffer.length)
                     return;
                 String inputString = new String(inputBuffer, 0, length);
-                System.out.print(inputString);
+                System.out.println(inputString);
                 byte[] yourPas = digest.digest(inputString.getBytes());
                 String hex = byteArrayToHexString(yourPas, yourPas.length);
                 if(passwordSet.contains(hex)){
@@ -691,7 +691,7 @@ class Transfer_UDP extends Thread {
                     new DatagramPacket(pk_data, offset, pk_length - offset,
                             InetAddress.getByName(ipAndPort[0]),
                             Integer.valueOf(ipAndPort[1]));
-            System.out.println("UDP: " + pk_length);
+            System.out.println("UDP: " + pk_length + " from " + pk.getAddress().toString() + " " + pk.getPort() + " to: " + ipAndPort[0] + " " + ipAndPort[1]);
             if(socket != null)
                 socket.send(_dp);
         } catch (IOException e) {
