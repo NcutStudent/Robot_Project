@@ -16,9 +16,7 @@ import com.example.dickman.myapplication.service.PhoneAnswerListener;
 public class OnBootBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        if(intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
-            Intent serviceIntent = new Intent(context, PhoneAnswerListener.class);
-            context.startService(serviceIntent);
-        }
+        Intent serviceIntent = new Intent(context, PhoneAnswerListener.class);
+        context.startService(serviceIntent);
     }
 }

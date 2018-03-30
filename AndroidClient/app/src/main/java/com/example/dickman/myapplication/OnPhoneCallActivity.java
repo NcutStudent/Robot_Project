@@ -25,7 +25,7 @@ public class OnPhoneCallActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
+
             PhoneAnswerListener.LocalBinder binder = (PhoneAnswerListener.LocalBinder) service;
             phoneAnswerListener = binder.getService();
         }

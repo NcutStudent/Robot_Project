@@ -18,8 +18,10 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.EditText;
@@ -51,7 +53,8 @@ public class MainActivity extends AppCompatActivity {
     VideoThread video = null;
     CameraDevice cameraDevice = null;
     TCP_Connect tcp_connect;
-    PhoneAnswerListener phoneAnswerListener;
+    static PhoneAnswerListener.LocalBinder binder;
+    boolean surfaceIsCreated = false;
 
     private class PacketClass implements Serializable {
         public DatagramSocket socket;
@@ -97,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if(intent.getAction().equals(getString(R.string.miss_connection))){
                 clickcall_end(null);
+            } else if (intent.getAction().equals(getString(R.string.answer_call))) {
+                //new Thread(new StartCommuication(binder)).start();
             }
         }
     };
@@ -107,8 +112,7 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
 
-            PhoneAnswerListener.LocalBinder binder = (PhoneAnswerListener.LocalBinder) service;
-            phoneAnswerListener = binder.getService();
+            binder = (PhoneAnswerListener.LocalBinder) service;
         }
 
         @Override
@@ -123,14 +127,37 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        passEdit = findViewById(R.id.editText);
-        surfaceView = findViewById(R.id.image);
-        Intent intent = new Intent(this, PhoneAnswerListener.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        passEdit      = findViewById(R.id.editText);
+        surfaceView  = findViewById(R.id.image);
+
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                surfaceIsCreated = true;
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                int a = 0;
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                surfaceIsCreated = false;
+                synchronized (surfaceView) {
+                    surfaceView.notifyAll();
+                }
+                surfaceIsCreated = true;
+            }
+        });
+
         IntentFilter broadCastIntentFitter = new IntentFilter();
         broadCastIntentFitter.addAction(getString(R.string.miss_connection));
+        broadCastIntentFitter.addAction(getString(R.string.answer_call));
         registerReceiver(phoneListener, broadCastIntentFitter);
+
+        Intent intent = new Intent(this, PhoneAnswerListener.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -142,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             boolean startCommunication = getIntent().getBooleanExtra("startCommunication", false);
             if(startCommunication) {
-                new Thread(new StartCommuication(null)).start();
+                new Thread(new StartCommuication(binder)).start();
             } else {
                 getIntent().putExtra("startCommunication", false);
             }
@@ -174,8 +201,7 @@ public class MainActivity extends AppCompatActivity {
                 audio = null;
                 video.stopRunning();
                 video = null;
-                setContentView(R.layout.activity_main);
-                Toast.makeText(this, "Communication stop", Toast.LENGTH_SHORT);
+                Toast.makeText(this, "Communication stop", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -207,86 +233,108 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void clickcall_start(View view) {
-        final String password = passEdit.getText().toString();
-        new Thread(new StartCommuication(password)).start();
+        PhoneAnswerListener phoneAnswerListener = binder.getService();
+        if(!phoneAnswerListener.isInit()){
+            Toast.makeText(this, "wait for program init", Toast.LENGTH_SHORT).show();
+        } else if(phoneAnswerListener.isPasswordError()) {
+            new Thread(new InitService(passEdit.getText().toString(), binder)).start();
+        } else {
+            phoneAnswerListener.makeACall();
+            Toast.makeText(this, "calling", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    class InitService implements Runnable{
+        String password;
+        PhoneAnswerListener.LocalBinder binder;
+
+        InitService(String password, PhoneAnswerListener.LocalBinder binder) {
+            this.password = password;
+            this.binder = binder;
+        }
+
+        @Override
+        public void run() {
+            PhoneAnswerListener phoneAnswerListener = binder.getService();
+            if(password != null) {
+                phoneAnswerListener.restartListening(password);
+            }
+            while(phoneAnswerListener.isInit());
+            if(!phoneAnswerListener.isPasswordError()) {
+                getSharedPreferences("settings", MODE_PRIVATE).edit()
+                        .putString("password", password)
+                        .apply();
+            }
+        }
     }
 
     class StartCommuication implements Runnable{
-        String password;
-        StartCommuication(String password) {
-            this.password = password;
+        PhoneAnswerListener.LocalBinder binder;
+        StartCommuication(PhoneAnswerListener.LocalBinder binder) {
+            this.binder = binder;
         }
 
         @Override
         public void run() {
             synchronized (audioLock) {
-                if (audio == null) {
-                    try {
-                        if(password != null) {
-                            phoneAnswerListener.restartListening(password);
-                        }
-                        while(phoneAnswerListener == null) Thread.sleep(100);
-                        while(!phoneAnswerListener.isInit());
-                        tcp_connect = new TCP_Connect(serverHost, serverPort, serverUdpPort);
+                if (audio == null && video == null) {
+                    PhoneAnswerListener phoneAnswerListener = binder.getService();
+                    while(!phoneAnswerListener.isInit());
+                    boolean isPasswordError = phoneAnswerListener.isPasswordError();
+                    tcp_connect = phoneAnswerListener.getTCP_Client();
 
-                        if (!phoneAnswerListener.isPasswordError()) {
-                            //TODO
-                            tcp_connect = phoneAnswerListener.getTCP_Client();
-                            if(password != null) {
-                                getSharedPreferences("settings", MODE_PRIVATE).edit()
-                                        .putString("password", password)
-                                        .apply();
-                            }
+                    if (!isPasswordError) {
+                        PacketClass packetClass = getSetting(tcp_connect, PhoneKey, RaspberryKey);
+                        Message msg = new Message();
+                        Bundle bundle = new Bundle();
+                        bundle.putSerializable("audio", packetClass);
+                        msg.arg1 = MyHandler.ON_AUDIO_START;
+                        msg.setData(bundle);
+                        mHandler.sendMessage(msg);
 
-                            PacketClass packetClass = getSetting(tcp_connect, PhoneKey, RaspberryKey);
-                            Message msg = new Message();
-                            Bundle bundle = new Bundle();
-                            bundle.putSerializable("audio", packetClass);
-                            msg.arg1 = MyHandler.ON_AUDIO_START;
-                            msg.setData(bundle);
-                            mHandler.sendMessage(msg);
-
-                            PacketClass packetClass1 = getSetting(tcp_connect, PhoneVideoKey, RaspberryVideoKey);
-                            CameraManager manager = ((CameraManager) getSystemService(Context.CAMERA_SERVICE));
-                            try {
-                                for (String cameraId : manager.getCameraIdList()) {
-                                    CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-                                    if (characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT) {
-                                        if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                                            requestPermissions(new String[] { Manifest.permission.CAMERA }, 0);
-                                            return;
-                                        }
-                                        manager.openCamera(cameraId, new CameraDevice.StateCallback() {
-                                            @Override
-                                            public void onOpened(@NonNull CameraDevice camera) {
-                                                cameraDevice = camera;
-                                                Message msg = new Message();
-                                                msg.arg1 = MyHandler.ON_VIDEO_START;
-                                                mHandler.sendMessage(msg);
-                                            }
-
-                                            @Override
-                                            public void onDisconnected(@NonNull CameraDevice camera) {
-
-                                            }
-
-                                            @Override
-                                            public void onError(@NonNull CameraDevice camera, int error) {
-
-                                            }
-                                        }, mHandler);
+                        CameraManager manager = ((CameraManager) getSystemService(Context.CAMERA_SERVICE));
+                        try {
+                            for (String cameraId : manager.getCameraIdList()) {
+                                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+                                if (characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT) {
+                                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                                        requestPermissions(new String[] { Manifest.permission.CAMERA }, 0);
+                                        return;
                                     }
+                                    manager.openCamera(cameraId, new CameraDevice.StateCallback() {
+                                        @Override
+                                        public void onOpened(@NonNull CameraDevice camera) {
+
+                                            while (!surfaceIsCreated);
+                                            cameraDevice = camera;
+                                            Message msg = new Message();
+                                            msg.arg1 = MyHandler.ON_VIDEO_START;
+                                            mHandler.sendMessage(msg);
+
+                                        }
+
+                                        @Override
+                                        public void onDisconnected(@NonNull CameraDevice camera) {
+
+                                        }
+
+                                        @Override
+                                        public void onError(@NonNull CameraDevice camera, int error) {
+
+                                        }
+                                    }, mHandler);
                                 }
-                            } catch (CameraAccessException e) {
-                                e.printStackTrace();
                             }
-                        } else {
-                            Toast.makeText(MainActivity.this, "password error or network is unavailable", Toast.LENGTH_LONG);
+                        } catch (CameraAccessException e) {
+                            e.printStackTrace();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                    } else {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this, "password error or network is unavailable", Toast.LENGTH_LONG).show();
+                            }
+                        });
                     }
                 }
             }

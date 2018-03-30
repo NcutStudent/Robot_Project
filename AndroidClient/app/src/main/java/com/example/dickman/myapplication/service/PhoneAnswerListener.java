@@ -55,27 +55,6 @@ public class PhoneAnswerListener extends Service {
     boolean passwordError = false;
     long soTimeout = 20000;
 
-
-    class TimeOutThread extends Thread{
-        long soTimeout;
-        Runnable runnable;
-        public TimeOutThread(long soTimeout, Runnable runnable){
-            this.soTimeout = soTimeout;
-        }
-        @Override
-        public void run() {
-            try {
-                sleep(soTimeout);
-
-                if(runnable != null) {
-                    runnable.run();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     class ServiceMainThread extends Thread {
         boolean isRunning = false;
 
@@ -126,6 +105,7 @@ public class PhoneAnswerListener extends Service {
                             haveCall = false;
                             answerCall = false;
                             hangUpCall = false;
+                            loseConnectionCount = 0;
                         }
                         else if(isCalling) {
                             b[offset] = ON_PHONE_CALL;
@@ -134,7 +114,9 @@ public class PhoneAnswerListener extends Service {
                             if(pk.getLength() > 1) {
                                 continue;
                             }
-                            if(b[offset] == ALIVE_CALL || b[offset] == ON_PHONE_CALL) {
+                            if(b[offset] == HANG_UP_CALL) {
+                                hangUpCall = true;
+                            } else if(b[offset] == ALIVE_CALL || b[offset] == ON_PHONE_CALL) {
                                 isCalling = false;
                                 answerCall = true;
                                 Intent intent = new Intent();
@@ -159,6 +141,14 @@ public class PhoneAnswerListener extends Service {
                             if(pk.getLength() > 1) {
                                 continue;
                             }
+                            if(b[offset] == HANG_UP_CALL) {
+                                hangUpCall = true;
+                                continue;
+                            } else if(b[offset] == ALIVE_CALL) {
+                            } else {
+                                continue;
+                            }
+                            theTime = System.currentTimeMillis() - theTime;
                             theTime = 1000 - theTime;
                             if(theTime > 0)
                                 Thread.sleep(theTime);
@@ -168,16 +158,9 @@ public class PhoneAnswerListener extends Service {
                             if(pk.getLength() > 1) {
                                 continue;
                             }
-                            if(b[offset] == ALIVE_CALL && !answerCall){
-                                icmp.setAddress(ip);
-                                icmp.setPort(port);
-                                b[offset] = HANG_UP_CALL;
-                                socket.send(icmp);
-                                haveCall = false;
-                            } else if(b[offset] == HANG_UP_CALL) {
+                            if(b[offset] == ALIVE_CALL){
                                 hangUpCall = true;
-                            }
-                             else if (!haveCall && b[offset] == ON_PHONE_CALL) {
+                            } else if (!haveCall && b[offset] == ON_PHONE_CALL) {
                                 Intent onPhoneCallIntent = new Intent();
                                 onPhoneCallIntent.setAction(getString(R.string.on_phone_call));
                                 sendBroadcast(onPhoneCallIntent);
@@ -253,7 +236,9 @@ public class PhoneAnswerListener extends Service {
         SharedPreferences settings = getSharedPreferences("settings", Context.MODE_PRIVATE);
         password = settings.getString("password", "");
 
-        if(password.equals("") || (listeningThread != null && listeningThread.isRunning)) {
+        if(password.equals("")) {
+            passwordError = true;
+            initFinish = true;
             return ;
         }
 
@@ -261,9 +246,27 @@ public class PhoneAnswerListener extends Service {
         listeningThread.start();
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Intent intent = new Intent();
+        intent.setAction(getString(R.string.service_closing));
+        sendBroadcast(intent);
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        return true;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
     }
 }

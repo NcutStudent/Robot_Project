@@ -19,7 +19,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <service android:name=".service.PhoneAnswerListener" />
 
         <receiver
@@ -29,6 +28,9 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="com.intent.action.custom.SERVICE_CLOSING" />
+            </intent-filter>
         </receiver>
         <receiver android:name=".broadcast.PhoneBroadCastListener">
             <intent-filter>
@@ -36,16 +38,16 @@
             </intent-filter>
         </receiver>
 
-
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity" android:screenOrientation="sensorLandscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen" android:name=".OnPhoneCallActivity" />
+        <activity
+            android:name=".OnPhoneCallActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen" />
     </application>
 
 </manifest>
