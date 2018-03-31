@@ -27,4 +27,6 @@
 
 *.swp
 
+*.pyc
+
 build/
