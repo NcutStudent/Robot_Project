@@ -136,9 +136,9 @@ class SlidingWindow extends Thread{
                         continue;
                     }
 
-                    if (System.currentTimeMillis() - windowsTime.get(i) > timeout) {
+                    if (System.currentTimeMillis() - windowsTime.get(i) > timeout) {//檢查訊息傳送是不是超過時間
                         try {
-                            socket.send(windowsPacket.get(i));
+                            socket.send(windowsPacket.get(i));//是的話重新傳送
                             windowsTime.set(i, System.currentTimeMillis());
                             Log.d("WARNING", "time out, send atk: " + String.valueOf(windowsPacket.get(i).getData()[windowsPacket.get(i).getLength() - 1]));
                         } catch (IOException e) {
@@ -269,28 +269,29 @@ class SlidingWindow extends Thread{
         start();
     }
 
-    public byte[] getData() {
+    public byte[] getData() {//獲得接收端傳來的資料
         synchronized (buffer) {
-            if(buffer.size() > 0) {
-                return buffer.remove(0);
+            if(buffer.size() > 0) {//當大小大於0，表示有資料近來
+                return buffer.remove(0);//將資料回傳給VideoThread，並將弟一個資料刪去
             }
             return null;
         }
     }
 
+    //sendData (要傳送的資料，資料長度)
     public void sendData(byte[] data, int length) throws IOException {
-        DatagramPacket pk = window.pktData(data, 0, length, ip, port);
-        if(pk == null) {
+        DatagramPacket pk = window.pktData(data, 0, length, ip, port);//將需要傳送的資料跟目的端包進DatagramPacket
+        if(pk == null) {//如果DatagramPacket裡沒資料就跳出
             return;
         }
-        socket.send(pk);
+        socket.send(pk);//否則就將資料傳遞出去
     }
 
     @Override
     public void run() {
         while(!isStop) {
             try {
-                window.update(socket);
+                window.update(socket);//做傳送timeout的檢查
                 Thread.sleep(timeout);
             } catch (InterruptedException e) {
                 e.printStackTrace();

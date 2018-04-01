@@ -44,7 +44,10 @@ public class VideoThread extends Thread {
             //H264Encoder建構編碼的程序，將H264Encoder(相機拍攝畫面，畫面大小，跟起始位置[從金鑰跟token以及中間的空白之後算起])
             h264Encoder = new H264Encoder(device, width, height, token.length() + phonekey.length() + raspberryKey.length() + 3);
             h264Decoder = new H264Decoder(outputSurface);
-            slidingWindow = new SlidingWindow(token + " " + phonekey + " " + raspberryKey + " ", socket, (byte)10, 100, ip, port);/暫定
+
+            /*為了讓傳輸速度更快而且更加完整，採用滑動式視窗(slidingWindow)做法
+                            SlidingWindow (標頭[將token跟金鑰放入]，廣播用socket資料，視窗大小，timeouti，接收端IP，接收端port)*/
+            slidingWindow = new SlidingWindow(token + " " + phonekey + " " + raspberryKey + " ", socket, (byte)10, 100, ip, port);
 
             byte[] key = (phonekey + " " + raspberryKey).getBytes();
             byte[] token = this.token.getBytes();
@@ -73,7 +76,7 @@ public class VideoThread extends Thread {
             @Override
             public void run() {
                 for(;;) {
-                    byte[] data = slidingWindow.getData();/暫定
+                    byte[] data = slidingWindow.getData();//呼叫slidingWindow的得到資料，確定資料是否從接收端獲得
                     if(data != null) {
                         h264Decoder.decodeByte(data);//如果資料不是null，就存放到h264Decoder的imageByteBuffer裡面
                     }
@@ -96,7 +99,7 @@ public class VideoThread extends Thread {
             System.arraycopy(key, 0, data, token.length + 1, key.length);//從token之後加入金鑰
             data[token.length + key.length + 1] = ' ';
             try {
-                slidingWindow.sendData(data, data.length - 1);/暫定
+                slidingWindow.sendData(data, data.length - 1);//利用slidingWindow傳送資料，slidingWindow (資料，資料長度-1[扣除空白])
             } catch (IOException e) {
                 e.printStackTrace();
             }
