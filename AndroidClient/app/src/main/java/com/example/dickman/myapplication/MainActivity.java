@@ -21,6 +21,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -87,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case ON_VIDEO_START:
                         outer.video = new VideoThread(outer.tcp_connect, outer.cameraDevice, outer.surfaceView.getHolder().getSurface(), 640, 480);
+                        Log.d("ASDSADSADASDAS", "video start");
                         break;
                     case ON_IMAGE_AVAILABLE:
                         break;
@@ -101,7 +103,8 @@ public class MainActivity extends AppCompatActivity {
             if(intent.getAction().equals(getString(R.string.miss_connection))){
                 clickcall_end(null);
             } else if (intent.getAction().equals(getString(R.string.answer_call))) {
-                //new Thread(new StartCommuication(binder)).start();
+                new Thread(new StartCommuication(binder)).start();
+                Toast.makeText(MainActivity.this, "communication start", Toast.LENGTH_SHORT);
             }
         }
     };
@@ -194,15 +197,32 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void clickcall_start(View view) {
+//        PhoneAnswerListener phoneAnswerListener = binder.getService();
+//        if(!phoneAnswerListener.isInit()){
+//            Toast.makeText(this, "wait for program init", Toast.LENGTH_SHORT).show();
+//        } else if(phoneAnswerListener.isPasswordError()) {
+//            new Thread(new InitService(passEdit.getText().toString(), binder)).start();
+//        } else {
+//            phoneAnswerListener.makeACall();
+//            Toast.makeText(this, "calling", Toast.LENGTH_SHORT).show();
+//        }
+        new Thread(new StartCommuication(binder)).start();
+    }
+
     public void clickcall_end(View view) {
         synchronized (audioLock) {
-            if (audio != null || video != null) {
+            PhoneAnswerListener phoneAnswerListener = binder.getService();
+            phoneAnswerListener.answerPhoneCall(false);
+            if (audio != null) {
                 audio.close();
                 audio = null;
+            }
+            if(video != null){
                 video.stopRunning();
                 video = null;
-                Toast.makeText(this, "Communication stop", Toast.LENGTH_SHORT).show();
             }
+            Toast.makeText(this, "Communication stop", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -230,18 +250,6 @@ public class MainActivity extends AppCompatActivity {
         }
         packetClass.token = tcp_connect.getToken();
         return packetClass;
-    }
-
-    public void clickcall_start(View view) {
-        PhoneAnswerListener phoneAnswerListener = binder.getService();
-        if(!phoneAnswerListener.isInit()){
-            Toast.makeText(this, "wait for program init", Toast.LENGTH_SHORT).show();
-        } else if(phoneAnswerListener.isPasswordError()) {
-            new Thread(new InitService(passEdit.getText().toString(), binder)).start();
-        } else {
-            phoneAnswerListener.makeACall();
-            Toast.makeText(this, "calling", Toast.LENGTH_SHORT).show();
-        }
     }
 
     class InitService implements Runnable{

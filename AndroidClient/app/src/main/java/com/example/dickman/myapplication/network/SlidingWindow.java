@@ -20,7 +20,7 @@ public class SlidingWindow extends Thread{
         private byte stamp = 0;
         private byte recvStamp = 0;
         private final List<Integer> recvWindows = new LinkedList<>();
-        private List<Integer> windows = new LinkedList<>();
+        private final List<Integer> windows = new LinkedList<>();
         private List<Long> windowsTime = new LinkedList<>();
         private List<DatagramPacket> windowsPacket = new LinkedList<>();
         private long timeout;
@@ -29,7 +29,6 @@ public class SlidingWindow extends Thread{
             atkPacket = new byte[header.length() + 1];
             System.arraycopy(header.getBytes(), 0, atkPacket, 0, header.length());
             this.timeout = timeout;
-            windows = new ArrayList<>();
             for (int i = 0; i < windowSize; ++i) {
                 windows.add(IDLE);
                 recvWindows.add(IDLE);
@@ -39,22 +38,26 @@ public class SlidingWindow extends Thread{
         }
 
         private void init() {
-            stamp = 0;
-            recvStamp = 0;
-            for (int i = 0; i < windows.size(); ++i) {
-                windows.set(i, IDLE);
+            synchronized (windows) {
+                stamp = 0;
+                recvStamp = 0;
+                for (int i = 0; i < windows.size(); ++i) {
+                    windows.set(i, IDLE);
+                }
             }
         }
 
         boolean haveIdle() {
-            int windowCount = -1;
-            for (int i = 0; i < windows.size(); ++i) {
-                if (windows.get(i) == IDLE) {
-                    windowCount = (i + stamp) % 128;
-                    break;
+            synchronized (windows) {
+                int windowCount = -1;
+                for (int i = 0; i < windows.size(); ++i) {
+                    if (windows.get(i) == IDLE) {
+                        windowCount = (i + stamp) % 128;
+                        break;
+                    }
                 }
-            }
             return (windowCount != -1);
+            }
         }
 
         DatagramPacket pktData(byte[] data, int offset, int dataLength, InetAddress ip, int port) {
@@ -101,6 +104,7 @@ public class SlidingWindow extends Thread{
                     e.printStackTrace();
                 }
                 int index = confirmBorder(recvStamp, atkPacket[atkPacket.length - 1]);
+                System.out.print("get atk: " + index + " from server");
                 if (index == -1)
                     return null;
                 if (recvWindows.get(index) == END) {
@@ -130,12 +134,11 @@ public class SlidingWindow extends Thread{
         }
 
         void update(DatagramSocket socket) { // check atk timeout
-            synchronized (windows) {
                 for (int i = 0; i < windows.size(); ++i) {
+                synchronized (windows) {
                     if (windows.get(i) != WAIT_FOR_RES) {
                         continue;
                     }
-
                     if (System.currentTimeMillis() - windowsTime.get(i) > timeout) {
                         try {
                             socket.send(windowsPacket.get(i));
