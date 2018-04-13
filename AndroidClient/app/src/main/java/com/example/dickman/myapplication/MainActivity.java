@@ -16,6 +16,7 @@ import android.hardware.camera2.CameraManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -105,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
             } else if (intent.getAction().equals(getString(R.string.answer_call))) {
                 new Thread(new StartCommuication(binder)).start();
                 Toast.makeText(MainActivity.this, "communication start", Toast.LENGTH_SHORT);
+            } else if (intent.getAction().equals(getString(R.string.hang_up))) {
+                clickcall_end(null);
             }
         }
     };
@@ -133,6 +136,16 @@ public class MainActivity extends AppCompatActivity {
         passEdit      = findViewById(R.id.editText);
         surfaceView  = findViewById(R.id.image);
 
+
+
+        int _SDK_INT = android.os.Build.VERSION.SDK_INT;
+        if (_SDK_INT > 8)
+        {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                    .permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
@@ -157,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter broadCastIntentFitter = new IntentFilter();
         broadCastIntentFitter.addAction(getString(R.string.miss_connection));
         broadCastIntentFitter.addAction(getString(R.string.answer_call));
+        broadCastIntentFitter.addAction(getString(R.string.hang_up));
         registerReceiver(phoneListener, broadCastIntentFitter);
 
         Intent intent = new Intent(this, PhoneAnswerListener.class);
@@ -198,22 +212,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void clickcall_start(View view) {
-//        PhoneAnswerListener phoneAnswerListener = binder.getService();
-//        if(!phoneAnswerListener.isInit()){
-//            Toast.makeText(this, "wait for program init", Toast.LENGTH_SHORT).show();
-//        } else if(phoneAnswerListener.isPasswordError()) {
-//            new Thread(new InitService(passEdit.getText().toString(), binder)).start();
-//        } else {
-//            phoneAnswerListener.makeACall();
-//            Toast.makeText(this, "calling", Toast.LENGTH_SHORT).show();
-//        }
-        new Thread(new StartCommuication(binder)).start();
+        PhoneAnswerListener phoneAnswerListener = binder.getService();
+        if(!phoneAnswerListener.isInit()){
+            Toast.makeText(this, "wait for program init", Toast.LENGTH_SHORT).show();
+        } else if(phoneAnswerListener.isPasswordError()) {
+            new Thread(new InitService(passEdit.getText().toString(), binder)).start();
+        } else {
+            phoneAnswerListener.makeACall();
+            Toast.makeText(this, "calling", Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void clickcall_end(View view) {
         synchronized (audioLock) {
-            PhoneAnswerListener phoneAnswerListener = binder.getService();
-            phoneAnswerListener.answerPhoneCall(false);
+
+            if (audio != null || video != null) {
+                PhoneAnswerListener phoneAnswerListener = binder.getService();
+                phoneAnswerListener.answerPhoneCall(false);
+            }
+
             if (audio != null) {
                 audio.close();
                 audio = null;

@@ -96,6 +96,11 @@ public class H264Encoder extends MediaCodec.Callback{
         synchronized (byteBuffers) {
             byteBuffers.add(bytes);
         }
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         mediaCodec.releaseOutputBuffer(index, false);
     }
 

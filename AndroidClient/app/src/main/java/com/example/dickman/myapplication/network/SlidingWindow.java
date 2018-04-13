@@ -104,7 +104,7 @@ public class SlidingWindow extends Thread{
                     e.printStackTrace();
                 }
                 int index = confirmBorder(recvStamp, atkPacket[atkPacket.length - 1]);
-                System.out.print("get atk: " + index + " from server");
+                System.out.println("get atk: " + atkPacket[atkPacket.length - 1] + " from server");
                 if (index == -1)
                     return null;
                 if (recvWindows.get(index) == END) {
@@ -133,9 +133,10 @@ public class SlidingWindow extends Thread{
             }
         }
 
-        void update(DatagramSocket socket) { // check atk timeout
+        void update(DatagramSocket socket) throws InterruptedException { // check atk timeout
                 for (int i = 0; i < windows.size(); ++i) {
                 synchronized (windows) {
+                    Thread.sleep(10);
                     if (windows.get(i) != WAIT_FOR_RES) {
                         continue;
                     }
@@ -158,7 +159,6 @@ public class SlidingWindow extends Thread{
                 int min = (stamp + windows.size()) % 128;
                 int top = stamp;
                 if(min < d && d < top ) {
-                    System.out.println("ERROR stamp: " + d);
                     return -1;
                 }
                 if (stamp <= d) {
@@ -170,10 +170,12 @@ public class SlidingWindow extends Thread{
                 int top = stamp + windows.size() - 1;
                 int min = stamp - 1;
                 if(d < min || top < d) {
-                    System.out.println("ERROR stamp: " + d);
                     return -1;
                 }
                 index = d - stamp;
+            }
+            if(index == -1) {
+                System.out.println("ERROR stamp: " + d);
             }
             return index;
         }

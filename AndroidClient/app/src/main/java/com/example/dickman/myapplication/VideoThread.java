@@ -24,7 +24,7 @@ public class VideoThread extends Thread {
     SlidingWindow slidingWindow;
     String token;
     String raspberryKey = "VideoRaspberry";
-    String phonekey = "VideoRaspberry";
+    String phonekey = "VideoPhone";
     boolean isRunning = false;
     public VideoThread(TCP_Connect tcp_connect, CameraDevice device, Surface outputSurface, int width, int height) {
         this.token = tcp_connect.getToken();

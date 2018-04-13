@@ -16,7 +16,6 @@ import java.util.List;
 
 public class H264Decoder extends  Thread {
     MediaCodec mediaCodec;
-    int bufferSize = 10;
     boolean isRunning = false;
     final List<byte[]> imageByteBuffer = new LinkedList<>();
     public H264Decoder(Surface surface) throws IOException {
@@ -36,6 +35,7 @@ public class H264Decoder extends  Thread {
             if (imageByteBuffer.size() == 0) {
                 continue;
             }
+
             byte[] data;
             synchronized (imageByteBuffer) {
                 data = imageByteBuffer.remove(0);
@@ -58,7 +58,6 @@ public class H264Decoder extends  Thread {
 
                 default:
                     mediaCodec.releaseOutputBuffer(outIndex, info.presentationTimeUs);
-
             }
         }
     }

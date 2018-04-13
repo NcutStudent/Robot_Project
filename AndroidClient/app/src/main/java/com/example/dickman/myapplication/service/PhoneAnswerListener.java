@@ -108,6 +108,9 @@ public class PhoneAnswerListener extends Service {
                             hangUpCall = false;
                             loseConnectionCount = 0;
                             activeUdpPortCount = 0;
+                            Intent intent = new Intent();
+                            intent.setAction(getString(R.string.hang_up));
+                            sendBroadcast(intent);
                         }
                         else if(isCalling) {
                             b[offset] = ON_PHONE_CALL;
