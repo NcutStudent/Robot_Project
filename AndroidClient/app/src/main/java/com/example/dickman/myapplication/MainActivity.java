@@ -16,11 +16,13 @@ import android.hardware.camera2.CameraManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -88,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case ON_VIDEO_START:
                         outer.video = new VideoThread(outer.tcp_connect, outer.cameraDevice, outer.surfaceView.getHolder().getSurface(), 640, 480);
+                        Log.d("ASDSADSADASDAS", "video start");
                         break;
                     case ON_IMAGE_AVAILABLE:
                         break;
@@ -102,7 +105,10 @@ public class MainActivity extends AppCompatActivity {
             if(intent.getAction().equals(getString(R.string.miss_connection))){
                 clickcall_end(null);
             } else if (intent.getAction().equals(getString(R.string.answer_call))) {
-                //new Thread(new StartCommuication(binder)).start();
+                new Thread(new StartCommuication(binder)).start();
+                Toast.makeText(MainActivity.this, "communication start", Toast.LENGTH_SHORT);
+            } else if (intent.getAction().equals(getString(R.string.hang_up))) {
+                clickcall_end(null);
             }
         }
     };
@@ -131,6 +137,16 @@ public class MainActivity extends AppCompatActivity {
         passEdit      = findViewById(R.id.editText);
         surfaceView  = findViewById(R.id.image);
 
+
+
+        int _SDK_INT = android.os.Build.VERSION.SDK_INT;
+        if (_SDK_INT > 8)
+        {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                    .permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
@@ -155,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter broadCastIntentFitter = new IntentFilter();
         broadCastIntentFitter.addAction(getString(R.string.miss_connection));
         broadCastIntentFitter.addAction(getString(R.string.answer_call));
+        broadCastIntentFitter.addAction(getString(R.string.hang_up));
         registerReceiver(phoneListener, broadCastIntentFitter);
 
         Intent intent = new Intent(this, PhoneAnswerListener.class);
@@ -195,15 +212,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void clickcall_start(View view) {
+        PhoneAnswerListener phoneAnswerListener = binder.getService();
+        if(!phoneAnswerListener.isInit()){
+            Toast.makeText(this, "wait for program init", Toast.LENGTH_SHORT).show();
+        } else if(phoneAnswerListener.isPasswordError()) {
+            new Thread(new InitService(passEdit.getText().toString(), binder)).start();
+        } else {
+            phoneAnswerListener.makeACall();
+            Toast.makeText(this, "calling", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public void clickcall_end(View view) {
         synchronized (audioLock) {
+
             if (audio != null || video != null) {
+                PhoneAnswerListener phoneAnswerListener = binder.getService();
+                phoneAnswerListener.answerPhoneCall(false);
+            }
+
+            if (audio != null) {
                 audio.close();
                 audio = null;
+            }
+            if(video != null){
                 video.stopRunning();
                 video = null;
-                Toast.makeText(this, "Communication stop", Toast.LENGTH_SHORT).show();
             }
+            Toast.makeText(this, "Communication stop", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -231,18 +268,6 @@ public class MainActivity extends AppCompatActivity {
         }
         packetClass.token = tcp_connect.getToken();
         return packetClass;
-    }
-
-    public void clickcall_start(View view) {
-        PhoneAnswerListener phoneAnswerListener = binder.getService();
-        if(!phoneAnswerListener.isInit()){
-            Toast.makeText(this, "wait for program init", Toast.LENGTH_SHORT).show();
-        } else if(phoneAnswerListener.isPasswordError()) {
-            new Thread(new InitService(passEdit.getText().toString(), binder)).start();
-        } else {
-            phoneAnswerListener.makeACall();
-            Toast.makeText(this, "calling", Toast.LENGTH_SHORT).show();
-        }
     }
 
     class InitService implements Runnable{

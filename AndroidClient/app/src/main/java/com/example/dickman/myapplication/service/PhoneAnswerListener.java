@@ -96,6 +96,7 @@ public class PhoneAnswerListener extends Service {
                 DatagramPacket icmp = new DatagramPacket(b, offset + 1, ip, port);
                 DatagramPacket pk = new DatagramPacket(b, offset, b.length - offset);
                 int loseConnectionCount = 0;
+                int activeUdpPortCount = 0;
                 for (; isRunning; ) {
                     try {
                         if(hangUpCall) {
@@ -106,6 +107,10 @@ public class PhoneAnswerListener extends Service {
                             answerCall = false;
                             hangUpCall = false;
                             loseConnectionCount = 0;
+                            activeUdpPortCount = 0;
+                            Intent intent = new Intent();
+                            intent.setAction(getString(R.string.hang_up));
+                            sendBroadcast(intent);
                         }
                         else if(isCalling) {
                             b[offset] = ON_PHONE_CALL;
@@ -168,8 +173,31 @@ public class PhoneAnswerListener extends Service {
                                     haveCall = true;
                                 }
                             }
+                            if (!haveCall) {
+                                activeUdpPortCount += 1;
+                                if(activeUdpPortCount > 30) {
+                                    activeUdpPortCount = 0;
+                                    byte empty[] = new byte[1];
+                                    DatagramPacket datagramPacket = new DatagramPacket(empty, 0, empty.length, ip, port);
+                                    socket.send(datagramPacket);
+                                }
+                            }
                         }
-                    } catch (IOException | InterruptedException ignored) {}
+                    } catch (IOException | InterruptedException ignored) {
+                        if (!isCalling && !haveCall && !answerCall) {
+                            activeUdpPortCount += 1;
+                            if (activeUdpPortCount > 30) {
+                                activeUdpPortCount = 0;
+                                byte empty[] = new byte[1];
+                                DatagramPacket datagramPacket = new DatagramPacket(empty, 0, empty.length, ip, port);
+                                try {
+                                    socket.send(datagramPacket);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
                 }
             } else {
                 passwordError = true;
