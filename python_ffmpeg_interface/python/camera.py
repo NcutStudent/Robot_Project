@@ -59,12 +59,11 @@ class Video_Capture:
             flag = self.socket.send(data.tostring())
         time.sleep(0.1)
 
-    def close_stream(self):
-        self.is_active = False
-
     def decode_stream(self):
         while self.is_active:
             self.decode_frame()
+        cv2.destroyAllWindows()
+        cv2.waitKey(1)
 
     def send_stream(self):
         while self.is_active:
@@ -77,3 +76,4 @@ class Video_Capture:
 
     def transfer_stop(self):
         self.is_active = False
+        self.socket.stop()

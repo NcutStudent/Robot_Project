@@ -164,3 +164,6 @@ class Sliding_Window:
         self.stamp += i
         self.stamp %= 128
         self.lock.release()
+
+    def stop(self):
+        self.isStop = True

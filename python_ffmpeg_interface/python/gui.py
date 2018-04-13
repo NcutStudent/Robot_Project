@@ -4,8 +4,8 @@ import thread
 import time
 import socket
 
-#from camera import *
-#from audio import *
+from camera import *
+from audio import *
 
 class Call_GUI(tk.Frame):
 
@@ -45,6 +45,9 @@ class Call_GUI(tk.Frame):
         self.have_call      = False
         self.answer_call    = False
         self.hang_up_call   = False
+        
+        self.audio  = None
+        self.camera = None
 
         thread.start_new_thread(self.listening_icmp, ())
 
@@ -54,18 +57,31 @@ class Call_GUI(tk.Frame):
         self.is_calling = True
 
     def action_answer_call(self) :
-        if self.have_call != True :
+        if self.have_call == False and self.is_calling == False:
             return
         self.answer_call = True
+        if self.audio != None :
+            self.audio.stop()
+
+        if self.camera != None :
+            self.camera.transfer_stop()
+        
+        self.audio = Audio_Capture(tcp_client, self.srcKey, self.dstKey)
+        self.camera= Video_Capture(tcp_client)
+
+        self.audio.start()
+        self.camera.transfer_start()
 
     def action_hang_up(self) :
         if not (self.have_call or self.is_calling or self.answer_call):
             return
+
         self.hang_up_call = True
         print("HANG UP")
 
     def listening_icmp(self):
         lose_connection_count = 0
+        active_udp_port_count = 0
         while True:
             try:
                 if self.hang_up_call :
@@ -75,6 +91,16 @@ class Call_GUI(tk.Frame):
                     self.answer_call    = False
                     self.hang_up_call   = False
                     lose_connection_count = 0
+                    active_udp_port_count = 0
+                    if self.audio != None :
+                        self.audio.stop()
+  
+                    if self.camera != None :
+                        self.camera.transfer_stop()
+  
+                    self.audio  = None
+                    self.camera = None
+
                 elif self.is_calling :
                     self.tcp_client.sent_data_to_server(self.icmp_socket, Call_GUI.ON_PHONE_CALL, self.sendIcmpKey, self.host_port)
                     data = self.icmp_socket.recv(20)
@@ -84,12 +110,12 @@ class Call_GUI(tk.Frame):
                     if data[0] == Call_GUI.HANG_UP_CALL :
                         self.hang_up_call = True
                     elif data[0] == Call_GUI.ALIVE_CALL or data[0] == Call_GUI.ON_PHONE_CALL :
+                        self.action_answer_call()
                         self.is_calling  = False
                         self.answer_call = True
                         # parner answer the phone call
                         print("call alive")
                 elif self.answer_call: 
-
                     if lose_connection_count > 2 :
                         self.hang_up_call = True
                         self.answer_call  = True
@@ -119,7 +145,6 @@ class Call_GUI(tk.Frame):
                     lose_connection_count = 0
             
                 else :
-
                     data = self.icmp_socket.recv(20)
                     if len(data) > 1:
                         continue
@@ -130,6 +155,19 @@ class Call_GUI(tk.Frame):
                         #have call
                         self.have_call = True
                         messagebox.showinfo("info", "you have a call")
-            except socket.error:
-                print("timeout")
+
+                    if not self.have_call :
+                        active_udp_port_count += 1
+                        if active_udp_port_count > 60: 
+                            self.icmp_socket.sendto(' ', self.host_port)
+                            active_udp_port_count = 0
+                            print('send a empty packet')
+            except :
+                if not self.have_call and not self.is_calling and not self.answer_call:
+                    active_udp_port_count += 1
+                    if active_udp_port_count > 60: 
+                        self.icmp_socket.sendto(' ', self.host_port)
+                        active_udp_port_count = 0
+                        print('send a empty packet')
+                
                 pass
