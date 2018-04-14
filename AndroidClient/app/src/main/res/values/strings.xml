@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">My Application</string>
+    <string name="on_phone_call"> com.intent.action.custom.ON_PHONE_CALL </string>
+    <string name="answer_call"> com.intent.action.custom.ANSWER_CALL </string>
+    <string name="miss_connection"> com.intent.action.custom.MISS_CONNECTION</string>
+    <string name="service_closing"> com.intent.action.custom.SERVICE_CLOSING</string>
 </resources>
