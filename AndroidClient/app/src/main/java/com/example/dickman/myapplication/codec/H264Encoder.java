@@ -27,6 +27,7 @@ public class H264Encoder extends MediaCodec.Callback{
     private int offset;
     private final List<byte[]> byteBuffers = new LinkedList<>();
     boolean isRunning = false;
+    private CameraCaptureSession session;
 
     class MyCameraCaptureSessionCallBack extends CameraCaptureSession.StateCallback{
 
@@ -40,6 +41,7 @@ public class H264Encoder extends MediaCodec.Callback{
 
                 CaptureRequest captureRequest = request.build();
                 session.setRepeatingRequest(captureRequest, null, null);
+                H264Encoder.this.session = session;
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             }
@@ -93,11 +95,21 @@ public class H264Encoder extends MediaCodec.Callback{
         }
         byte[] bytes = new byte[byteBuffer.remaining() + offset + 1];
         byteBuffer.get(bytes, offset, byteBuffer.remaining());
+
         synchronized (byteBuffers) {
             byteBuffers.add(bytes);
         }
+
+        while(byteBuffers.size() > 20) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         try {
-            Thread.sleep(10);
+            Thread.sleep(30);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -123,5 +135,9 @@ public class H264Encoder extends MediaCodec.Callback{
     }
     synchronized public void stopEncoding() {
         mediaCodec.stop();
+        if(session != null) {
+            session.close();
+            session = null;
+        }
     }
 }

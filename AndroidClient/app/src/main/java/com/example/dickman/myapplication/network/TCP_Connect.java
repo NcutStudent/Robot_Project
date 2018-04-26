@@ -1,5 +1,7 @@
 package com.example.dickman.myapplication.network;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -75,6 +77,7 @@ public class TCP_Connect {
             DatagramPacket pk = new DatagramPacket(str.getBytes(), str.getBytes().length, serverIp, serverUdpPort);
             socket.send(pk);
             socket.receive(pk);
+            Log.d("aASDSADAS", new String(pk.getData(), 0, pk.getLength()));
         } catch (IOException e) {
             return null;
         }

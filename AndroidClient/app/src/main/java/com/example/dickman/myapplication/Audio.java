@@ -57,7 +57,6 @@ public class Audio extends Thread
                                 track.write(recieve_data, 0, recieve_data.length);
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
                     }
                 }
             }
@@ -89,6 +88,7 @@ public class Audio extends Thread
             while(!stopped)  //Sent data frame: token <key> <data>
             {
                 recorder.read(send_buffer, offset, send_buffer.length - offset);
+                String a = new String(send_buffer, 0, offset);
                 udp_connect.sendBytes(send_buffer);
 
             }

@@ -1,6 +1,7 @@
 package com.example.dickman.myapplication;
 
 import android.hardware.camera2.CameraDevice;
+import android.util.Log;
 import android.view.Surface;
 
 import com.example.dickman.myapplication.codec.H264Decoder;
@@ -72,6 +73,9 @@ public class VideoThread extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        isRunning = true;
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -81,10 +85,10 @@ public class VideoThread extends Thread {
                         h264Decoder.decodeByte(data);
                     }
                 }
+                Log.d("NOOOOOO", "OUT OF FOR");
             }
         }).start();
         this.start();
-        isRunning = true;
     }
 
     @Override
@@ -109,5 +113,7 @@ public class VideoThread extends Thread {
     synchronized void stopRunning() {
         isRunning = false;
         slidingWindow.stopRunning();
+        h264Decoder.stopDecoding();
+        h264Encoder.stopEncoding();
     }
 }

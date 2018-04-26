@@ -86,7 +86,9 @@ public class PhoneAnswerListener extends Service {
                     port = Integer.valueOf(ip_port[1]);
                 } while(port == 0);
 
-                socket = tcp_connect.getUdpSocket(listenSocketId);
+                do {
+                    socket = tcp_connect.getUdpSocket(listenSocketId);
+                } while(socket == null);
                 byte b[] = new byte[200];
                 int offset = tcp_connect.getToken().length() + sendSocketId.length() + 2;
                 System.arraycopy(tcp_connect.getToken().getBytes(), 0, b, 0, tcp_connect.getToken().length());
@@ -218,9 +220,6 @@ public class PhoneAnswerListener extends Service {
     }
 
     public synchronized void restartListening(String password) {
-        if(password.equals(this.password)){
-            return;
-        }
         this.password = password;
         if(listeningThread != null) {
             listeningThread.stopRunning();

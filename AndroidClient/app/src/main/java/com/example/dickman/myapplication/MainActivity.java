@@ -303,6 +303,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             synchronized (audioLock) {
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 if (audio == null && video == null) {
                     PhoneAnswerListener phoneAnswerListener = binder.getService();
                     while(!phoneAnswerListener.isInit());

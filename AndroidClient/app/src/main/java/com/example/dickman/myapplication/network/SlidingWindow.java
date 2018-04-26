@@ -143,6 +143,7 @@ public class SlidingWindow extends Thread{
                     if (System.currentTimeMillis() - windowsTime.get(i) > timeout) {
                         try {
                             socket.send(windowsPacket.get(i));
+                            String a = new String(windowsPacket.get(i).getData(), 0, Math.min(128, windowsPacket.get(i).getLength()));
                             windowsTime.set(i, System.currentTimeMillis());
                             Log.d("WARNING", "time out, send atk: " + String.valueOf(windowsPacket.get(i).getData()[windowsPacket.get(i).getLength() - 1]));
                         } catch (IOException e) {
