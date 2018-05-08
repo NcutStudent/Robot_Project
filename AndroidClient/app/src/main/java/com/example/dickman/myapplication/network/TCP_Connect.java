@@ -1,5 +1,7 @@
 package com.example.dickman.myapplication.network;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,16 +34,15 @@ public class TCP_Connect {
         socket = new DatagramSocket();
     }
 
-    public boolean inputPassword(String pass) {//確認密碼是否正確，從MainActivity傳進來
+    public boolean inputPassword(String pass) {
         try {
-            bw.write(pass.getBytes());//將這資料傳遞出去給伺服器判斷
-            byte[] buffer = new byte[256];//設定緩衝期
+            bw.write(pass.getBytes());
+            byte[] buffer = new byte[256];
             int length = br.read(buffer);
             String data = new String(buffer, 0, length);
-            if(data.length() < 16){//如果接到的資料小於原定大小，表示錯誤 *(這裡其實有點偷懶，因為失敗會回傳 PASSWORD ERROR 之類的東西)
+            if(data.length() < 16){
                 return false;
             }
-            //否則就是密碼正確，將接收到的data寫入權杖內，並回傳true
             token = data;
             return true;
         } catch (IOException e) {
@@ -53,48 +54,45 @@ public class TCP_Connect {
         return token;
     }
 
-    public String getSocketIpPort(String key){//設定金鑰傳出，並獲得IP跟Port，主要做為雙方在連線上的交流
+    public String getSocketIpPort(String key){
         try {
-            if (socket == null)//如果沒收到就傳null回去，MainActivity接收到後會等待60ms在詢問第二次，以此類推
+            if (socket == null)
                 return "";
-            String str = token + " g " + key;//傳出去的格式 token (也就是剛剛上面得到的data)，g (表示得到get的意思)，key (從MainActivity進來的金鑰)
-
-            //傳送給目標端，DatagramPacket(傳送的資料, 資料長度, serverIp, serverUdpPort)
+            String str = token + " g " + key;
             DatagramPacket pk = new DatagramPacket(str.getBytes(), str.getBytes().length, serverIp, serverUdpPort);
-            socket.send(pk);//傳出
-            socket.receive(pk);//接收
-            return new String(pk.getData(), 0, pk.getLength());//回傳給MainActivity，String(資料源, 從哪理起頭, 資料長度) 起頭 + 長度，0 到 0 + pk.getLength()
+            socket.send(pk);
+            socket.receive(pk);
+            return new String(pk.getData(), 0, pk.getLength());
         }catch (IOException e) {
             return "0.0.0.0 0";
         }
     }
 
-    public DatagramSocket getUdpSocket(String key) {//設定金鑰傳出，此時雙方已經完成連線的狀態，主要做為雙方在連線後創立UDP通道
+    public DatagramSocket getUdpSocket(String key) {
         DatagramSocket socket = null;
         try {
-            socket = new DatagramSocket();//創建一個DatagramSocket，並綁到本機上5000以上的隨機接口
+            socket = new DatagramSocket();
             socket.setSoTimeout(1000);
-            String str = token + " s " + key;//傳出去的格式 token (也就是剛剛上面得到的data)，s (表示得到set的意思)，key (從MainActivity進來的金鑰)
-
-            //傳送給目標端，DatagramPacket(傳送的資料, 資料長度, serverIp, serverUdpPort)
+            String str = token + " s " + key;
             DatagramPacket pk = new DatagramPacket(str.getBytes(), str.getBytes().length, serverIp, serverUdpPort);
             socket.send(pk);
             socket.receive(pk);
+            Log.d("aASDSADAS", new String(pk.getData(), 0, pk.getLength()));
         } catch (IOException e) {
             return null;
         }
-        //全部完成後回傳socket的接口，SERVER會將DATA轉送至這個SOCKET監聽的PORT        return socket;
+        return socket;
     }
 
-    public String getSlidingIp_Port(String key) {//此為視訊所用的連線
+    public String getSlidingIp_Port(String key) {
         try {
             if (socket == null)
                 return "";
-            String str = token + " w " + key;//跟前面一樣
+            String str = token + " w " + key;
             DatagramPacket pk = new DatagramPacket(str.getBytes(), str.getBytes().length, serverIp, serverUdpPort);
             socket.send(pk);
             socket.receive(pk);
-            return new String(pk.getData(), 0, pk.getLength());//回傳給VideoThread，String(資料源, 從哪理起頭, 資料長度)
+            return new String(pk.getData(), 0, pk.getLength());
         }catch (IOException e) {
             return "0.0.0.0 0";
         }

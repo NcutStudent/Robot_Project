@@ -20,7 +20,7 @@ public class SlidingWindow extends Thread{
         private byte stamp = 0;
         private byte recvStamp = 0;
         private final List<Integer> recvWindows = new LinkedList<>();
-        private List<Integer> windows = new LinkedList<>();
+        private final List<Integer> windows = new LinkedList<>();
         private List<Long> windowsTime = new LinkedList<>();
         private List<DatagramPacket> windowsPacket = new LinkedList<>();
         private long timeout;
@@ -29,7 +29,6 @@ public class SlidingWindow extends Thread{
             atkPacket = new byte[header.length() + 1];
             System.arraycopy(header.getBytes(), 0, atkPacket, 0, header.length());
             this.timeout = timeout;
-            windows = new ArrayList<>();
             for (int i = 0; i < windowSize; ++i) {
                 windows.add(IDLE);
                 recvWindows.add(IDLE);
@@ -39,22 +38,26 @@ public class SlidingWindow extends Thread{
         }
 
         private void init() {
-            stamp = 0;
-            recvStamp = 0;
-            for (int i = 0; i < windows.size(); ++i) {
-                windows.set(i, IDLE);
+            synchronized (windows) {
+                stamp = 0;
+                recvStamp = 0;
+                for (int i = 0; i < windows.size(); ++i) {
+                    windows.set(i, IDLE);
+                }
             }
         }
 
         boolean haveIdle() {
-            int windowCount = -1;
-            for (int i = 0; i < windows.size(); ++i) {
-                if (windows.get(i) == IDLE) {
-                    windowCount = (i + stamp) % 128;
-                    break;
+            synchronized (windows) {
+                int windowCount = -1;
+                for (int i = 0; i < windows.size(); ++i) {
+                    if (windows.get(i) == IDLE) {
+                        windowCount = (i + stamp) % 128;
+                        break;
+                    }
                 }
-            }
             return (windowCount != -1);
+            }
         }
 
         DatagramPacket pktData(byte[] data, int offset, int dataLength, InetAddress ip, int port) {
@@ -101,6 +104,7 @@ public class SlidingWindow extends Thread{
                     e.printStackTrace();
                 }
                 int index = confirmBorder(recvStamp, atkPacket[atkPacket.length - 1]);
+                System.out.println("get atk: " + atkPacket[atkPacket.length - 1] + " from server");
                 if (index == -1)
                     return null;
                 if (recvWindows.get(index) == END) {
@@ -129,16 +133,17 @@ public class SlidingWindow extends Thread{
             }
         }
 
-        void update(DatagramSocket socket) { // check atk timeout
-            synchronized (windows) {
+        void update(DatagramSocket socket) throws InterruptedException { // check atk timeout
                 for (int i = 0; i < windows.size(); ++i) {
+                synchronized (windows) {
+                    Thread.sleep(10);
                     if (windows.get(i) != WAIT_FOR_RES) {
                         continue;
                     }
-
                     if (System.currentTimeMillis() - windowsTime.get(i) > timeout) {
                         try {
                             socket.send(windowsPacket.get(i));
+                            String a = new String(windowsPacket.get(i).getData(), 0, Math.min(128, windowsPacket.get(i).getLength()));
                             windowsTime.set(i, System.currentTimeMillis());
                             Log.d("WARNING", "time out, send atk: " + String.valueOf(windowsPacket.get(i).getData()[windowsPacket.get(i).getLength() - 1]));
                         } catch (IOException e) {
@@ -155,7 +160,6 @@ public class SlidingWindow extends Thread{
                 int min = (stamp + windows.size()) % 128;
                 int top = stamp;
                 if(min < d && d < top ) {
-                    System.out.println("ERROR stamp: " + d);
                     return -1;
                 }
                 if (stamp <= d) {
@@ -167,10 +171,12 @@ public class SlidingWindow extends Thread{
                 int top = stamp + windows.size() - 1;
                 int min = stamp - 1;
                 if(d < min || top < d) {
-                    System.out.println("ERROR stamp: " + d);
                     return -1;
                 }
                 index = d - stamp;
+            }
+            if(index == -1) {
+                System.out.println("ERROR stamp: " + d);
             }
             return index;
         }

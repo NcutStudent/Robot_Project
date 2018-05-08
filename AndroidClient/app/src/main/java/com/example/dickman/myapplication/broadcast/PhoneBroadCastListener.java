@@ -13,8 +13,8 @@ import com.example.dickman.myapplication.OnPhoneCallActivity;
 public class PhoneBroadCastListener extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        Intent broadcastIntent = new Intent(context, OnPhoneCallActivity.class);//準備接收訊號
-        broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);//因為要從一個非正式的管道開啟Activity，例如：service、BroadcastReceiver等，所以得在Intent設置一個Intent.FLAG_ACTIVITY_NEW_TASK標記
-        context.startActivity(broadcastIntent);//起動OnPhoneCallActivity，已接收電話來電訊號
+        Intent broadcastIntent = new Intent(context, OnPhoneCallActivity.class);
+        broadcastIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(broadcastIntent);
     }
 }

@@ -1,9 +1,15 @@
 package com.example.dickman.myapplication.broadcast;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.util.Log;
 
+import com.example.dickman.myapplication.MainActivity;
+import com.example.dickman.myapplication.R;
 import com.example.dickman.myapplication.service.PhoneAnswerListener;
 
 /**
@@ -13,7 +19,7 @@ import com.example.dickman.myapplication.service.PhoneAnswerListener;
 public class OnBootBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        Intent serviceIntent = new Intent(context, PhoneAnswerListener.class);//準備手機服務的監聽程式
-        context.startService(serviceIntent);//起動PhoneAnswerListener這個服務
+        Intent serviceIntent = new Intent(context, PhoneAnswerListener.class);
+        context.startService(serviceIntent);
     }
 }

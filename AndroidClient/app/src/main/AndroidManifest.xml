@@ -38,7 +38,7 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".MainActivity" android:screenOrientation="sensorLandscape">
+        <activity android:name=".MainActivity" android:screenOrientation="sensorLandscape" android:label="@string/main_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -47,6 +47,8 @@
         </activity>
         <activity
             android:name=".OnPhoneCallActivity"
+            android:screenOrientation="sensorPortrait"
+            android:label="@string/call_name"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen" />
     </application>
 

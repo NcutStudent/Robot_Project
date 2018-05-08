@@ -1,7 +1,10 @@
 <resources>
     <string name="app_name">My Application</string>
+    <string name="main_name">通話畫面</string>
+    <string name="call_name">來電畫面</string>
     <string name="on_phone_call"> com.intent.action.custom.ON_PHONE_CALL </string>
     <string name="answer_call"> com.intent.action.custom.ANSWER_CALL </string>
     <string name="miss_connection"> com.intent.action.custom.MISS_CONNECTION</string>
     <string name="service_closing"> com.intent.action.custom.SERVICE_CLOSING</string>
+    <string name="hang_up"> com.intent.action.custom.HANG_UP</string>
 </resources>

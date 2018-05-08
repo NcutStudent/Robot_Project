@@ -2,7 +2,7 @@ package com.example.dickman.myapplication.network;
 
 import android.util.Log;
 
-import java.io.IOException;
+import java.io.IOException; //例外功能
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -14,36 +14,32 @@ public class UDP_Request {
     private DatagramSocket socket;
     private DatagramPacket rceivePacket;
 
-    //Audio聲音的UDP管道 UDP_Request （連線的socket從MainActivity獲得金鑰，伺服器IP，伺服器Port，timeout，緩衝大小）
-
     public UDP_Request(DatagramSocket socket, String Host, int SentPort, int timeout, int bufferSize) throws IOException {
-        byte receiveBuffer[] = new byte[bufferSize];//開一個接收的buffer
+        byte receiveBuffer[] = new byte[bufferSize];
         this.Host = Host;
         this.SentPort = SentPort;
         this.socket = socket;
-        if (timeout != 0) //如果時間不是0，那就把等待時間傳給socket當作他的等待時間
+        if (timeout != 0)
             socket.setSoTimeout(timeout);
-        rceivePacket = new DatagramPacket(receiveBuffer, bufferSize); //https://developer.android.com/reference/java/net/DatagramPacket.html，將接收端的接口建立出來
+        rceivePacket = new DatagramPacket(receiveBuffer, bufferSize); //https://developer.android.com/reference/java/net/DatagramPacket.html
     }
 
-    public void send (final String input) throws UnknownHostException
-    byte data[] = input.getBytes();
-    final DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(Host), this.SentPort);
+    public void send (final String input) throws UnknownHostException {
+
+        byte data[] = input.getBytes();
+        final DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(Host), this.SentPort);
         try {
-        socket.send(packet);
-    } catch (IOException e) {
-        e.printStackTrace();
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-}
 
-    public void sendBytes(final byte data[]) throws UnknownHostException {//傳送音訊的通道，在Audio.class呼叫
-
-        /*將音訊的檔案利用這條通道傳出，使用UDP是為了速度上的效率，而且就算音訊上有封包不小心遺失，人耳也聽不出來
-                    DatagramPacket(音訊資料, 資料的長度, 伺服器IP位址, );*/
+    public void sendBytes(final byte data[]) throws UnknownHostException {
 
         final DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(Host), this.SentPort);
         try {
-            socket.send(packet);//將包好的資料傳送出去
+            socket.send(packet);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -54,9 +50,9 @@ public class UDP_Request {
         // TODO
     }
 
-    public byte[] receive() throws IOException {//接收資料
+    public byte[] receive() throws IOException {
         socket.receive(rceivePacket);
-        return rceivePacket.getData();//接收到資料後回傳
+        return rceivePacket.getData();
     }
 
     public DatagramPacket receivePkt() throws IOException {
