@@ -129,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
         passEdit      = findViewById(R.id.editText);
         surfaceView  = findViewById(R.id.image);
 
+        passEdit.setEnabled(false);
         passEdit.setText(getIntent().getExtras().getString("password"));
 
         int _SDK_INT = android.os.Build.VERSION.SDK_INT;
