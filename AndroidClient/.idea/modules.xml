@@ -3,9 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/AndroidClient.iml" filepath="$PROJECT_DIR$/AndroidClient.iml" />
-      <module fileurl="file://D:\Scratch\Robot_Project-master\Robot_Project-master\AndroidClient\AndroidClient.iml" filepath="D:\Scratch\Robot_Project-master\Robot_Project-master\AndroidClient\AndroidClient.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://D:\Scratch\Robot_Project-master\Robot_Project-master\AndroidClient\app\app.iml" filepath="D:\Scratch\Robot_Project-master\Robot_Project-master\AndroidClient\app\app.iml" />
     </modules>
   </component>
 </project>
