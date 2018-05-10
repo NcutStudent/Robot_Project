@@ -21,7 +21,7 @@ class ThreadKeepRunning extends Thread{
 
 public class Audio extends Thread
 {
-    private final String RaspberryKey = "Raspberry";
+    private final static String RaspberryKey = Util.RaspberryKey;
 
     private int client_frame_size = 20480; // dont cnahge it
     private ThreadKeepRunning recieveAudio;

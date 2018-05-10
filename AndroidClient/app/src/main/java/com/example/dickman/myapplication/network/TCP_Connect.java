@@ -17,15 +17,12 @@ public class TCP_Connect {
     private int serverUdpPort;
     private OutputStream bw;//取得網路輸出串流
     private InputStream br;//取得網路輸入串流
-    private String pass = null;
     private InetAddress serverIp;
-    private int serverPort;
     private String token = null;
     private DatagramSocket socket = null;
 
     public TCP_Connect(String serverHost, int serverPort, int serverUdpPort) throws IOException {
         serverIp = InetAddress.getByName(serverHost);
-        this.serverPort = serverPort;
         this.serverUdpPort = serverUdpPort;
         clientSocket = new Socket(serverIp, serverPort);
         clientSocket.setSoTimeout(1000);

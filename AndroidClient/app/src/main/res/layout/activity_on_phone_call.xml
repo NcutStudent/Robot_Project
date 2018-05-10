@@ -8,33 +8,35 @@
 
     <Button
         android:id="@+id/answerCall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="48dp"
-        android:layout_marginStart="8dp"
+        android:layout_width="104dp"
+        android:layout_height="106dp"
+        android:layout_marginBottom="28dp"
+        android:layout_marginStart="24dp"
+        android:background="@mipmap/incoming_call"
         android:onClick="answerCall"
-        android:text="接拉幹"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/button4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="48dp"
-        android:layout_marginEnd="16dp"
+        android:id="@+id/hangUpCall"
+        android:layout_width="104dp"
+        android:layout_height="106dp"
+        android:layout_marginBottom="28dp"
+        android:layout_marginEnd="24dp"
+        android:background="@mipmap/close_call"
         android:onClick="hangUp"
-        android:text="啊就不要啊"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/icon"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/answerCall"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@mipmap/hqdefault" />
+        app:srcCompat="@mipmap/noname" />
 </android.support.constraint.ConstraintLayout>

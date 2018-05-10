@@ -1,8 +1,28 @@
 <resources>
     <string name="app_name">My Application</string>
+    <string name="main_name">通話畫面</string>
+    <string name="call_name">來電畫面</string>
+    <string name="nextPage">下一頁</string>
+    <string name="prevPage">上一頁</string>
+    <string name="select_image">選擇圖片</string>
+    <string name="input_id">輸入ID</string>
+    <string name="submit">送出</string>
+    <string name="select_from_gallery">從圖庫選擇</string>
+    <string name="take_photo">拍照</string>
+    <string name="can_not_find_camera">無法取得相機</string>
+    <string name="please_select_image">請選擇圖片</string>
+    <string name="please_input_id">請輸入ID</string>
+    <string name="warning">警告</string>
+    <string name="ok">確定</string>
+    <string name="cancel">取消</string>
+    <string name="id_is_exist_warning">此ID已存在，是否複寫</string>
+    <string name="delete_contact">刪除聯絡人</string>
+    <string name="add_new_contact">新增聯絡人</string>
     <string name="on_phone_call"> com.intent.action.custom.ON_PHONE_CALL </string>
     <string name="answer_call"> com.intent.action.custom.ANSWER_CALL </string>
     <string name="miss_connection"> com.intent.action.custom.MISS_CONNECTION</string>
     <string name="service_closing"> com.intent.action.custom.SERVICE_CLOSING</string>
     <string name="hang_up"> com.intent.action.custom.HANG_UP</string>
+    <string name="title_activity_select_contact">SelectContact</string>
+    <string name="section_format">Hello World from section: %1$d</string>
 </resources>

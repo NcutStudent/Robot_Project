@@ -37,17 +37,9 @@ import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.net.DatagramSocket;
 
+import static com.example.dickman.myapplication.Util.*;
+
 public class MainActivity extends AppCompatActivity {
-    final String PhoneKey = "Phone";
-    final String RaspberryKey = "Raspberry";
-
-    final String PhoneVideoKey = "VideoPhone";
-    final String RaspberryVideoKey = "VideoRaspberry";
-
-    public static final int serverPort = 7777;
-    public static final int serverUdpPort = 8888;
-    public static final int timeout = 0;
-    public static final String serverHost = "140.128.88.166";
 
     private EditText passEdit = null;
     private SurfaceView surfaceView;
@@ -86,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                         if (packetClass == null)
                             break;
                         outer.audio = new Audio(packetClass.socket, packetClass.cientHost, packetClass.SentPort,
-                                outer.timeout, packetClass.token);
+                                Util.timeout, packetClass.token);
                         break;
                     case ON_VIDEO_START:
                         outer.video = new VideoThread(outer.tcp_connect, outer.cameraDevice, outer.surfaceView.getHolder().getSurface(), 640, 480);
@@ -137,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         passEdit      = findViewById(R.id.editText);
         surfaceView  = findViewById(R.id.image);
 
-
+        passEdit.setText(getIntent().getExtras().getString("password"));
 
         int _SDK_INT = android.os.Build.VERSION.SDK_INT;
         if (_SDK_INT > 8)
@@ -322,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
                         msg.arg1 = MyHandler.ON_AUDIO_START;
                         msg.setData(bundle);
                         mHandler.sendMessage(msg);
+                        binder.getService().setBitmapPath(getIntent().getExtras().getString("Bitmap Path"));
 
                         CameraManager manager = ((CameraManager) getSystemService(Context.CAMERA_SERVICE));
                         try {
@@ -372,7 +365,3 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
-
-
-
-

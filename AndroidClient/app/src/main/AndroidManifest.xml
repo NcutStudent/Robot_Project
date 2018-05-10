@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.dickman.myapplication">
-
+    <uses-feature android:name="android.hardware.camera"
+        android:required="true" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -19,7 +20,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <service android:name=".service.PhoneAnswerListener" />
+        <service android:name=".service.PhoneAnswerListener"
+            android:process=":phone"/>
 
         <receiver
             android:name=".broadcast.OnBootBroadcastReceiver"
@@ -38,17 +40,31 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".MainActivity" android:screenOrientation="sensorLandscape">
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/main_name"
+            android:screenOrientation="sensorLandscape" />
+        <activity
+            android:name=".SelectContact"
+            android:label="@string/title_activity_select_contact"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".OnPhoneCallActivity"
-            android:screenOrientation="sensorPortrait"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen" />
+        <activity android:name=".AddContact" />
+        <activity android:name=".OnPhoneCallActivity" />
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.example.dickman.myapplication.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

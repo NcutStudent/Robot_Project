@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -29,6 +30,7 @@ import java.net.UnknownHostException;
 import java.sql.Time;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeoutException;
+import static com.example.dickman.myapplication.Util.*;
 
 /**
  * Created by HatsuneMiku on 2018/3/28.
@@ -54,6 +56,7 @@ public class PhoneAnswerListener extends Service {
     boolean initFinish  = false;
     boolean passwordError = false;
     long soTimeout = 20000;
+    String bitmapPath;
 
     class ServiceMainThread extends Thread {
         boolean isRunning = false;
@@ -69,10 +72,13 @@ public class PhoneAnswerListener extends Service {
 
             if(tcp_connect == null) {
                 try {
-                    tcp_connect = new TCP_Connect(MainActivity.serverHost, MainActivity.serverPort, MainActivity.serverUdpPort);
+                    tcp_connect = new TCP_Connect(serverHost, serverPort, serverUdpPort);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+            if(tcp_connect == null) {
+                return;
             }
             if(tcp_connect.inputPassword(password)) {
                 initFinish = true;
@@ -170,6 +176,9 @@ public class PhoneAnswerListener extends Service {
                             } else if (!haveCall && b[offset] == ON_PHONE_CALL) {
                                 Intent onPhoneCallIntent = new Intent();
                                 onPhoneCallIntent.setAction(getString(R.string.on_phone_call));
+                                Bundle bundle = new Bundle();
+                                bundle.putString("Bitmap Path", bitmapPath);
+                                onPhoneCallIntent.putExtras(bundle);
                                 sendBroadcast(onPhoneCallIntent);
                                 synchronized (PhoneAnswerListener.this) {
                                     haveCall = true;
@@ -295,5 +304,9 @@ public class PhoneAnswerListener extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         return START_STICKY;
+    }
+
+    public void setBitmapPath(String bitmapPath) {
+        this.bitmapPath = bitmapPath;
     }
 }

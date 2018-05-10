@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.dickman.myapplication.SelectContact">
+    <item
+        android:id="@+id/delete_contact"
+        android:orderInCategory="101"
+        android:title="@string/delete_contact" />
+    <item
+        android:id="@+id/add_new_contact"
+        android:orderInCategory="100"
+        android:title="@string/add_new_contact" />
+</menu>
