@@ -2,7 +2,6 @@ package com.example.dickman.myapplication;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
@@ -11,28 +10,30 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Environment;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import static com.example.dickman.myapplication.Util.*;
+
+import static com.example.dickman.myapplication.Util.IMAGE_FOLDER_NAME;
+import static com.example.dickman.myapplication.Util.IMAGE_PATH;
+import static com.example.dickman.myapplication.Util.NO_OVERRIDE;
+import static com.example.dickman.myapplication.Util.OVERRIDE;
+import static com.example.dickman.myapplication.Util.SHARED_PREFERENCES;
+import static com.example.dickman.myapplication.Util.USER_ID;
+import static com.example.dickman.myapplication.Util.YES_OVERRIDE;
 
 public class AddContact extends AppCompatActivity {
 
@@ -45,6 +46,7 @@ public class AddContact extends AppCompatActivity {
     Bitmap bmp;
     AlertDialog chooseMethod;
 
+    private File mypath;
     final static String TEMP_IMAGE_NAME = "temp.png";
 
     @Override
@@ -121,44 +123,55 @@ public class AddContact extends AppCompatActivity {
         DialogInterface.OnClickListener onClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                selectImage.setEnabled(false);
-                submitButton.setEnabled(false);
-                tvInputId.setEnabled(false);
-                ContextWrapper cw = new ContextWrapper(getApplicationContext());
-                File directory = cw.getDir(IMAGE_FOLDER_NAME, Context.MODE_PRIVATE);
-                if (!directory.exists()) {
-                    directory.mkdir();
-                }
-                String imgName = tvInputId.getText().toString() + ".png";
-                File mypath = new File(directory, imgName);
-                FileOutputStream fos = null;
-                try {
-                    fos = new FileOutputStream(mypath);
-                    boolean i = bmp.compress(Bitmap.CompressFormat.PNG, 70, fos);
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
 
-                Intent intent = new Intent();
-                Bundle bundle = new Bundle();
-                bundle.putString(USER_ID, tvInputId.getText().toString());
-                bundle.putString(IMAGE_PATH, mypath.getAbsolutePath());
-                intent.putExtras(bundle);
-                setResult(RESULT_OK,intent);
-                AddContact.this.finish();
+                add(NO_OVERRIDE);
             }
         };
         if(isIdExist != null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(R.string.warning);
             builder.setMessage(R.string.id_is_exist_warning);
-            builder.setPositiveButton(R.string.ok,onClickListener);
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    add(YES_OVERRIDE);
+                }
+            });
             builder.setNegativeButton(R.string.cancel, null);
             builder.show();
         } else {
             onClickListener.onClick(null, 0);
         }
+    }
+
+    private void add(String override) {
+        selectImage.setEnabled(false);
+        submitButton.setEnabled(false);
+        tvInputId.setEnabled(false);
+        ContextWrapper cw = new ContextWrapper(getApplicationContext());
+        File directory = cw.getDir(IMAGE_FOLDER_NAME, Context.MODE_PRIVATE);
+        if (!directory.exists()) {
+            directory.mkdir();
+        }
+        String imgName = tvInputId.getText().toString() + ".png";
+        mypath = new File(directory, imgName);
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(mypath);
+            boolean i = bmp.compress(Bitmap.CompressFormat.PNG, 70, fos);
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Intent intent = new Intent();
+        Bundle bundle = new Bundle();
+        bundle.putString(USER_ID, tvInputId.getText().toString());
+        bundle.putString(IMAGE_PATH, mypath.getAbsolutePath());
+        bundle.putString(OVERRIDE,override);
+        intent.putExtras(bundle);
+        setResult(RESULT_OK,intent);
+        AddContact.this.finish();
     }
 
     @Override

@@ -16,7 +16,6 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -25,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.dickman.myapplication.service.PhoneAnswerListener;
 
@@ -32,8 +32,37 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import static com.example.dickman.myapplication.Util.*;
 
+import static com.example.dickman.myapplication.Util.ADD_CONTACT_CODE;
+import static com.example.dickman.myapplication.Util.ICONIDList;
+import static com.example.dickman.myapplication.Util.ICONIDNAME;
+import static com.example.dickman.myapplication.Util.IMAGE_PATH;
+import static com.example.dickman.myapplication.Util.OVERRIDE;
+import static com.example.dickman.myapplication.Util.SHARED_PREFERENCES;
+import static com.example.dickman.myapplication.Util.USER_ID;
+import static com.example.dickman.myapplication.Util.YES_OVERRIDE;
+/*android:id="@+id/main_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SelectContact">
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" >
+
+    </android.support.v4.view.ViewPager>
+
+    <activity
+            android:name=".SelectContact"
+            android:label="@string/title_activity_select_contact">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>*/
 
 public class SelectContact extends AppCompatActivity {
 
@@ -52,7 +81,10 @@ public class SelectContact extends AppCompatActivity {
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
+    private String id = "";
     List<Pair<String, String>> iconData = new ArrayList<>();
+    private ArrayList<String> iconID = new ArrayList<>();
+    private int environNums;
 
     static PhoneAnswerListener.LocalBinder binder;
     String pas;
@@ -80,19 +112,26 @@ public class SelectContact extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_contact);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        //Toolbar toolbar = findViewById(R.id.toolbar);
+        //setSupportActionBar(toolbar);
 
         Map<String, ?> data = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE).getAll();
         for (Map.Entry<String, ?> entry : data.entrySet())
         {
-            iconData.add(new Pair<String, String>(entry.getKey(), (String) entry.getValue()));
+            iconData.add(new Pair<String, String>(entry.getKey(), String.valueOf(entry.getValue())));
         }
 
         pas = getSharedPreferences("settings", MODE_PRIVATE).getString("password", null);
         if(binder == null) {
             Intent phoneListenerIntent = new Intent(this, PhoneAnswerListener.class);
             bindService(phoneListenerIntent, mConnection, Context.BIND_AUTO_CREATE);
+        }
+
+        SharedPreferences preferDataList = getSharedPreferences(ICONIDList, MODE_PRIVATE);
+        environNums = preferDataList.getInt(ICONIDNAME, 0);
+        for (int i = 0; i < environNums; i++){
+            String environItem = preferDataList.getString("item_"+i, null);
+            iconID.add(environItem);
         }
 
         // Set up the ViewPager with the sections adapter.
@@ -128,10 +167,28 @@ public class SelectContact extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == ADD_CONTACT_CODE && resultCode == Activity.RESULT_OK) {
             Bundle bundle = data.getExtras();
-            String id = bundle.getString(USER_ID);
+            String override = bundle.getString(OVERRIDE);
+            if(override.equals(YES_OVERRIDE)){
+                SharedPreferences sharedPreferences_remove = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
+                int i = iconID.indexOf(bundle.getString(USER_ID));
+                Pair<String, String> data_remove = iconData.remove(i);
+                iconID.remove(i);
+                sharedPreferences_remove.edit().remove(data_remove.first).apply();
+                //(new File(data_remove.second)).delete();
+                mSectionsPagerAdapter.notifyDataSetChanged();
+            }
+
+            id = bundle.getString(USER_ID);
+            iconID.add(id);
             String imgName = bundle.getString(IMAGE_PATH);
             SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE);
             sharedPreferences.edit().putString(id, imgName).apply();
+            SharedPreferences.Editor editor = getSharedPreferences(ICONIDList, MODE_PRIVATE).edit();
+            editor.putInt(ICONIDNAME, iconID.size()).apply();
+            for (int i = 0; i < iconID.size(); i++){
+                editor.putString("item_"+i, iconID.get(i));
+            }
+            editor.commit();
             iconData.add(new Pair<String, String>(id, imgName));
             mSectionsPagerAdapter.notifyDataSetChanged();
         }
@@ -149,6 +206,7 @@ public class SelectContact extends AppCompatActivity {
             SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
             int i = mViewPager.getCurrentItem();
             Pair<String, String> data = iconData.remove(i);
+            iconID.remove(i);
              sharedPreferences.edit().remove(data.first).apply();
             (new File(data.second)).delete();
             mSectionsPagerAdapter.notifyDataSetChanged();
@@ -179,8 +237,10 @@ public class SelectContact extends AppCompatActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_select_contact, container, false);
             ImageView imageView = rootView.findViewById(R.id.icon);
+            TextView textView = rootView.findViewById(R.id.tvID);
             Bitmap bmp = BitmapFactory.decodeFile(iconInfo.second);
             imageView.setImageBitmap(bmp);
+            textView.setText(iconInfo.first);
             Button button = rootView.findViewById(R.id.callButton);
             button.setOnClickListener(new View.OnClickListener() {
                 @Override

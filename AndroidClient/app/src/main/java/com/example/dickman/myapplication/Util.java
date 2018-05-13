@@ -12,6 +12,11 @@ public class Util {
     final static String SHARED_PREFERENCES_TEMP = "activity_statues";
     final static String USER_ID = "ID";
     final static String IMAGE_PATH = "PATH";
+    final static String NO_OVERRIDE = "NO_OVERRIDE";
+    final static String YES_OVERRIDE = "YES_OVERRIDE";
+    final static String OVERRIDE = "OVERRIDE";
+    final static String ICONIDList = "ICONIDList";
+    final static String ICONIDNAME = "ICONIDNAME";
 
     final static int ADD_CONTACT_CODE = 1232;
 

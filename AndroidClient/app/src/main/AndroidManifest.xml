@@ -46,15 +46,16 @@
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".SelectContact"
-            android:label="@string/title_activity_select_contact"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:label="@string/title_activity_select_contact">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".AddContact" />
+        <activity
+            android:name=".AddContact"
+            android:label="@string/title_activity_add_contact"/>
         <activity android:name=".OnPhoneCallActivity" />
         <provider
             android:name="android.support.v4.content.FileProvider"
