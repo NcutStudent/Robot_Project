@@ -1,5 +1,6 @@
 package com.example.dickman.myapplication;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -7,11 +8,13 @@ import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -73,34 +76,39 @@ public class AddContact extends AppCompatActivity {
                     intent.setAction(Intent.ACTION_GET_CONTENT);
                     startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_PICK_IMAGE);
                 } else if(position == 1) {
-                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    File newFile = new File(AddContact.this.getFilesDir(), TEMP_IMAGE_NAME);
-
-                    Uri photoUri = FileProvider.getUriForFile(
-                            AddContact.this,
-                            getPackageName() + ".fileprovider",
-                            newFile);
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-                    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                    if (ActivityCompat.checkSelfPermission(AddContact.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ) {
+                        requestPermissions(new String[]{new String(Manifest.permission.CAMERA)}, 0);
                     } else {
-                        AlertDialog.Builder b = new AlertDialog.Builder(AddContact.this);
-                        b.setTitle("Error");
-                        b.setMessage(R.string.can_not_find_camera);
-                        b.setOnCancelListener(new DialogInterface.OnCancelListener() {
-                            @Override
-                            public void onCancel(DialogInterface dialog) {
-                                Intent intent = new Intent();
-                                intent.setType("image/*");
-                                intent.setAction(Intent.ACTION_GET_CONTENT);
-                                startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_PICK_IMAGE);
-                            }
-                        });
-                        b.setPositiveButton("OK", null);
-                        b.show();
+                        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        File newFile = new File(AddContact.this.getFilesDir(), TEMP_IMAGE_NAME);
+
+                        Uri photoUri = FileProvider.getUriForFile(
+                                AddContact.this,
+                                getPackageName() + ".fileprovider",
+                                newFile);
+                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+                            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                        } else {
+                            AlertDialog.Builder b = new AlertDialog.Builder(AddContact.this);
+                            b.setTitle("Error");
+                            b.setMessage(R.string.can_not_find_camera);
+                            b.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                @Override
+                                public void onCancel(DialogInterface dialog) {
+                                    Intent intent = new Intent();
+                                    intent.setType("image/*");
+                                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                                    startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_PICK_IMAGE);
+                                }
+                            });
+                            b.setPositiveButton("OK", null);
+                            b.show();
+                        }
                     }
                 }
                 chooseMethod.cancel();
+
             }
         });
     }

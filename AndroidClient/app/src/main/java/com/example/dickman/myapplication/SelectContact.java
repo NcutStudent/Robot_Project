@@ -1,6 +1,7 @@
 package com.example.dickman.myapplication;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -41,28 +42,6 @@ import static com.example.dickman.myapplication.Util.OVERRIDE;
 import static com.example.dickman.myapplication.Util.SHARED_PREFERENCES;
 import static com.example.dickman.myapplication.Util.USER_ID;
 import static com.example.dickman.myapplication.Util.YES_OVERRIDE;
-/*android:id="@+id/main_content"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".SelectContact">
-
-    <android.support.v4.view.ViewPager
-        android:id="@+id/container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" >
-
-    </android.support.v4.view.ViewPager>
-
-    <activity
-            android:name=".SelectContact"
-            android:label="@string/title_activity_select_contact">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>*/
 
 public class SelectContact extends AppCompatActivity {
 
@@ -112,8 +91,6 @@ public class SelectContact extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_contact);
 
-        //Toolbar toolbar = findViewById(R.id.toolbar);
-        //setSupportActionBar(toolbar);
 
         Map<String, ?> data = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE).getAll();
         for (Map.Entry<String, ?> entry : data.entrySet())
@@ -203,13 +180,21 @@ public class SelectContact extends AppCompatActivity {
             startActivityForResult(intent, ADD_CONTACT_CODE);
             return true;
         } else if(id == R.id.delete_contact) {
-            SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
             int i = mViewPager.getCurrentItem();
-            Pair<String, String> data = iconData.remove(i);
-            iconID.remove(i);
-             sharedPreferences.edit().remove(data.first).apply();
-            (new File(data.second)).delete();
-            mSectionsPagerAdapter.notifyDataSetChanged();
+            if(iconData.size() == 0){
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle(R.string.warning);
+                builder.setMessage(R.string.id_is_delete_warning);
+                builder.setNegativeButton(R.string.ok,null);
+                builder.show();
+            } else {
+                SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
+                Pair<String, String> data = iconData.remove(i);
+                iconID.remove(i);
+                sharedPreferences.edit().remove(data.first).apply();
+                (new File(data.second)).delete();
+                mSectionsPagerAdapter.notifyDataSetChanged();
+            }
         }
         return super.onOptionsItemSelected(item);
     }
