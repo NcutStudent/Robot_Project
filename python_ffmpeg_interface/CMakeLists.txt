@@ -14,7 +14,7 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF)
 
-find_package(Boost REQUIRED python numpy system)
+find_package(Boost REQUIRED python27 numpy27 system)
 find_package(OpenCV)
 find_package(FFmpeg)
 find_package(Threads)
@@ -73,7 +73,6 @@ if((Boost_FOUND) AND (OpenCV_FOUND) AND (FFMPEG_FOUND) AND (PYTHONLIBS_FOUND))
 
     add_library(H264ImgProcess SHARED include/H264ImgProcess.h src/H264ImgProcess.cpp)
     target_link_libraries(H264ImgProcess dlib::dlib_shared ${OpenCV_LIBS} H264Encoder H264Decoder)
-
 
     add_library(boost_test SHARED boost_test.cpp)
     target_link_libraries(boost_test ${PYTHON_LIBRARY} ${Boost_LIBRARIES} Threads::Threads)
