@@ -7,21 +7,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -32,12 +30,12 @@ import android.widget.Toast;
 import com.example.dickman.myapplication.network.TCP_Connect;
 import com.example.dickman.myapplication.service.PhoneAnswerListener;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.net.DatagramSocket;
 
-import static com.example.dickman.myapplication.Util.*;
+import static com.example.dickman.myapplication.Util.PhoneKey;
+import static com.example.dickman.myapplication.Util.RaspberryKey;
 
 public class MainActivity extends AppCompatActivity {
 

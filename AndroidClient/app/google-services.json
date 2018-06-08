@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "592909725239",
+    "firebase_url": "https://robotcallclient.firebaseio.com",
+    "project_id": "robotcallclient",
+    "storage_bucket": "robotcallclient.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592909725239:android:5e98cf083ac085d7",
+        "android_client_info": {
+          "package_name": "com.example.dickman.myapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "592909725239-t8krs7r31c5q6tuj7a2agsdn5c4fspdb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.dickman.myapplication",
+            "certificate_hash": "b43e60e081193155059f0f178120f4a0047af398"
+          }
+        },
+        {
+          "client_id": "592909725239-569bjvc5c0seun7j1vi0rh265pbt2dmt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCIz_jryr4pkJT69p48kIedkiXiN2YJCs"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "592909725239-569bjvc5c0seun7j1vi0rh265pbt2dmt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

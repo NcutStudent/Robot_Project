@@ -4,20 +4,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ImageView;
 
 import com.example.dickman.myapplication.service.PhoneAnswerListener;
-
-import java.io.IOException;
 
 public class OnPhoneCallActivity extends AppCompatActivity {
     MediaPlayer player;
@@ -52,10 +47,7 @@ public class OnPhoneCallActivity extends AppCompatActivity {
         player.start();
         Intent intent = new Intent(this, PhoneAnswerListener.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-        String bitmapPath = getIntent().getExtras().getString("Bitmap Path");
-        if(bitmapPath != null) {
-            ((ImageView)findViewById(R.id.icon)).setImageBitmap(BitmapFactory.decodeFile(bitmapPath));
-        }
+
     }
 
     @Override

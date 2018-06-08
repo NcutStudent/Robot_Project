@@ -27,6 +27,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.dickman.myapplication.service.FCM_IDService;
 import com.example.dickman.myapplication.service.PhoneAnswerListener;
 
 import java.io.File;
@@ -64,6 +65,7 @@ public class SelectContact extends AppCompatActivity {
     List<Pair<String, String>> iconData = new ArrayList<>();
     private ArrayList<String> iconID = new ArrayList<>();
     private int environNums;
+    private FCM_IDService fcm_idService = new FCM_IDService();
 
     static PhoneAnswerListener.LocalBinder binder;
     String pas;
@@ -90,7 +92,6 @@ public class SelectContact extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_contact);
-
 
         Map<String, ?> data = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE).getAll();
         for (Map.Entry<String, ?> entry : data.entrySet())
@@ -176,6 +177,7 @@ public class SelectContact extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.add_new_contact) {
+            fcm_idService.onTokenRefresh();
             Intent intent = new Intent(this, AddContact.class);
             startActivityForResult(intent, ADD_CONTACT_CODE);
             return true;

@@ -10,23 +10,12 @@
         android:id="@+id/answerCall"
         android:layout_width="104dp"
         android:layout_height="106dp"
-        android:layout_marginBottom="28dp"
-        android:layout_marginStart="24dp"
+        android:layout_marginBottom="24dp"
+        android:layout_marginStart="140dp"
         android:background="@mipmap/incoming_call"
         android:onClick="answerCall"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/hangUpCall"
-        android:layout_width="104dp"
-        android:layout_height="106dp"
-        android:layout_marginBottom="28dp"
-        android:layout_marginEnd="24dp"
-        android:background="@mipmap/close_call"
-        android:onClick="hangUp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
     <ImageView
         android:id="@+id/icon"
