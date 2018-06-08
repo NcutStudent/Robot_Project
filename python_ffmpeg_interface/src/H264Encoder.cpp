@@ -27,8 +27,8 @@ H264Encoder::H264Encoder(int height, int width)
 		avCtx->width = width;
 		avCtx->time_base.num = 1; avCtx->time_base.den = 25;
 		avCtx->framerate.num = 15; avCtx->framerate.den = 1;
-		avCtx->gop_size = 10;
-		avCtx->max_b_frames = 1;
+		avCtx->gop_size = 5;
+		avCtx->max_b_frames = 0; // b frame 
 		avCtx->pix_fmt = AV_PIX_FMT_YUV420P;
 	}
 	int ret = avcodec_open2(avCtx, encodec, NULL);

@@ -14,7 +14,7 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)  
 set(Boost_USE_STATIC_RUNTIME OFF)
 
-find_package(Boost REQUIRED python numpy system)
+find_package(Boost REQUIRED python27 numpy27 system)
 find_package(OpenCV)
 find_package(FFmpeg)
 find_package(Threads)
