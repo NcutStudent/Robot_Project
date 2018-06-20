@@ -3,6 +3,9 @@ import tkMessageBox as messagebox
 import thread
 import time
 import socket
+import tx2_gpio as gpio
+
+gpio = gpio.GPIO()
 
 from camera import *
 from audio import *
@@ -13,6 +16,12 @@ class Call_GUI(tk.Frame):
     ALIVE_CALL    = '\x53'
     HANG_UP_CALL  = '\x21'
 
+    HAVE_PIN      = 398
+    CALL_PIN      = 298
+    HAND_PIN      = 389
+    ANSR_PIN      = 388
+    
+
     def __init__(self, master, tcp_client, srcKey, dstKey, listenIcmpKey, sendIcmpKey):
         tk.Frame.__init__(self, master)
         self.pack()
@@ -21,6 +30,15 @@ class Call_GUI(tk.Frame):
         self.srcKey = srcKey
         self.dstKey = dstKey
         self.sendIcmpKey = sendIcmpKey
+        self.call_pin = gpio.open_pin(Call_GUI.CALL_PIN)
+        self.call_pin.set_mode('in')
+        self.hand_pin = gpio.open_pin(Call_GUI.HAND_PIN)
+        self.hand_pin.set_mode('in')
+        self.ansr_pin = gpio.open_pin(Call_GUI.ANSR_PIN)
+        self.ansr_pin.set_mode('in')
+        self.have_pin = gpio.open_pin(Call_GUI.HAVE_PIN)
+        self.have_pin.set_mode('out')
+        self.have_pin.set_value(0)
         self.call_phone_button = tk.Button(self, bg='yellow', height=4, width=20, font=("Courier", 44))
         self.call_phone_button['text'] = 'Call Phone'
         self.call_phone_button.grid(row=0, column=0)
@@ -65,7 +83,7 @@ class Call_GUI(tk.Frame):
 
         if self.camera != None :
             self.camera.transfer_stop()
-        
+
         self.audio = Audio_Capture(tcp_client, self.srcKey, self.dstKey)
         self.camera= Video_Capture(tcp_client)
 
@@ -76,6 +94,7 @@ class Call_GUI(tk.Frame):
         if not (self.have_call or self.is_calling or self.answer_call):
             return
 
+        self.have_pin.set_value(0)
         self.hang_up_call = True
         print("HANG UP")
 
@@ -83,6 +102,15 @@ class Call_GUI(tk.Frame):
         lose_connection_count = 0
         active_udp_port_count = 0
         while True:
+            if self.hand_pin.get_value() == 1:
+                print("hand pin")
+                self.action_hang_up()
+            elif self.call_pin.get_value() == 1:
+                self.action_call_phone()
+                print("call pin")
+            elif self.ansr_pin.get_value() == 1:
+                print("anser call")
+                self.action_answer_call()
             try:
                 if self.hang_up_call :
                     self.tcp_client.sent_data_to_server(self.icmp_socket, Call_GUI.HANG_UP_CALL, self.sendIcmpKey, self.host_port)
@@ -154,6 +182,7 @@ class Call_GUI(tk.Frame):
                     elif not self.have_call and data[0] == Call_GUI.ON_PHONE_CALL :
                         #have call
                         self.have_call = True
+                        self.have_pin.set_value(1)
                         messagebox.showinfo("info", "you have a call")
 
                     if not self.have_call :
