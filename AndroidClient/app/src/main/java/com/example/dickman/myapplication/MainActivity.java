@@ -8,6 +8,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -103,6 +106,11 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "communication start", Toast.LENGTH_SHORT).show();
             } else if (intent.getAction().equals(getString(R.string.hang_up))) {
                 click_call_end(null);
+
+                intent = new Intent(MainActivity.this,MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                intent.putExtra("startCommunication", false);
+                startActivity(intent);
             }
         }
     };
@@ -352,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             synchronized (audioLock) {
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
