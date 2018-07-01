@@ -130,8 +130,7 @@ public class AddContact extends AppCompatActivity {
         DialogInterface.OnClickListener onClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                setResult(RESULT_CANCELED,null);
-                AddContact.this.finish();
+                returnDataAndFinish();
             }
         };
         if(isIdExist != null) {

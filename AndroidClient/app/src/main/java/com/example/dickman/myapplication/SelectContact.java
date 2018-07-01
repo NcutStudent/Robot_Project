@@ -124,7 +124,6 @@ public class SelectContact extends AppCompatActivity {
         if (requestCode == ADD_CONTACT_CODE && resultCode == Activity.RESULT_OK) {
             Bundle bundle = data.getExtras();
 
-            SharedPreferences sharedPreferences_remove = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
             int i;
             String id = bundle.getString(USER_ID);
             for(i = 0; i < iconData.size(); ++i) {

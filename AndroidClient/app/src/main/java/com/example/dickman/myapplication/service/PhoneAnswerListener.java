@@ -173,6 +173,10 @@ public class PhoneAnswerListener extends Service {
                                 synchronized (PhoneAnswerListener.this) {
                                     haveCall = true;
                                 }
+                            } else if (b[offset] == HANG_UP_CALL) {
+                                Intent intent = new Intent();
+                                intent.setAction(getString(R.string.hang_up));
+                                sendBroadcast(intent);
                             }
                             if (!haveCall) {
                                 activeUdpPortCount += 1;
@@ -248,7 +252,7 @@ public class PhoneAnswerListener extends Service {
     }
 
     public boolean isCalling() {
-        return isCalling;
+        return isCalling | answerCall;
     }
 
     public boolean isPasswordError() {
