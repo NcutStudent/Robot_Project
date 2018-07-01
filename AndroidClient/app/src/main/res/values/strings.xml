@@ -24,7 +24,7 @@
     <string name="miss_connection"> com.intent.action.custom.MISS_CONNECTION</string>
     <string name="service_closing"> com.intent.action.custom.SERVICE_CLOSING</string>
     <string name="hang_up"> com.intent.action.custom.HANG_UP</string>
-    <string name="title_activity_select_contact">選擇聯絡人</string>
+    <string name="title_activity_select_contact">C-Robot</string>
     <string name="title_activity_add_contact">加入聯絡人</string>
     <string name="section_format">Hello World from section: %1$d</string>
 </resources>

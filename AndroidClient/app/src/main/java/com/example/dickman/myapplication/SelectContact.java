@@ -26,6 +26,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.dickman.myapplication.service.PhoneAnswerListener;
 
@@ -34,36 +35,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.dickman.myapplication.Util.ADD_CONTACT_CODE;
-import static com.example.dickman.myapplication.Util.ICONIDList;
-import static com.example.dickman.myapplication.Util.ICONIDNAME;
-import static com.example.dickman.myapplication.Util.IMAGE_PATH;
-import static com.example.dickman.myapplication.Util.OVERRIDE;
-import static com.example.dickman.myapplication.Util.SHARED_PREFERENCES;
-import static com.example.dickman.myapplication.Util.USER_ID;
-import static com.example.dickman.myapplication.Util.YES_OVERRIDE;
+import static com.example.dickman.myapplication.Util.*;
 
 public class SelectContact extends AppCompatActivity {
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
-
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
-    private String id = "";
     List<Pair<String, String>> iconData = new ArrayList<>();
-    private ArrayList<String> iconID = new ArrayList<>();
-    private int environNums;
 
     static PhoneAnswerListener.LocalBinder binder;
     String pas;
@@ -97,17 +75,10 @@ public class SelectContact extends AppCompatActivity {
             iconData.add(new Pair<String, String>(entry.getKey(), String.valueOf(entry.getValue())));
         }
 
-        pas = getSharedPreferences("settings", MODE_PRIVATE).getString("password", null);
+        pas = getSharedPreferences(TEMP_FILE, MODE_PRIVATE).getString(USER_PASSWORD, null);
         if(binder == null) {
             Intent phoneListenerIntent = new Intent(this, PhoneAnswerListener.class);
             bindService(phoneListenerIntent, mConnection, Context.BIND_AUTO_CREATE);
-        }
-
-        SharedPreferences preferDataList = getSharedPreferences(ICONIDList, MODE_PRIVATE);
-        environNums = preferDataList.getInt(ICONIDNAME, 0);
-        for (int i = 0; i < environNums; i++){
-            String environItem = preferDataList.getString("item_"+i, null);
-            iconID.add(environItem);
         }
 
         // Set up the ViewPager with the sections adapter.
@@ -117,7 +88,7 @@ public class SelectContact extends AppCompatActivity {
         if(pas != null) {
             Intent intent = new Intent(this, MainActivity.class);
             Bundle bundle = new Bundle();
-            bundle.putString("password", pas);
+            bundle.putString(USER_PASSWORD, pas);
             intent.putExtras(bundle);
             startActivity(intent);
         }
@@ -146,25 +117,17 @@ public class SelectContact extends AppCompatActivity {
             String override = bundle.getString(OVERRIDE);
             if(override.equals(YES_OVERRIDE)){
                 SharedPreferences sharedPreferences_remove = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
-                int i = iconID.indexOf(bundle.getString(USER_ID));
+                int i = iconData.indexOf(bundle.getString(USER_ID));
                 Pair<String, String> data_remove = iconData.remove(i);
-                iconID.remove(i);
                 sharedPreferences_remove.edit().remove(data_remove.first).apply();
                 //(new File(data_remove.second)).delete();
                 mSectionsPagerAdapter.notifyDataSetChanged();
             }
 
-            id = bundle.getString(USER_ID);
-            iconID.add(id);
+            String id = bundle.getString(USER_ID);
             String imgName = bundle.getString(IMAGE_PATH);
             SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE);
             sharedPreferences.edit().putString(id, imgName).apply();
-            SharedPreferences.Editor editor = getSharedPreferences(ICONIDList, MODE_PRIVATE).edit();
-            editor.putInt(ICONIDNAME, iconID.size()).apply();
-            for (int i = 0; i < iconID.size(); i++){
-                editor.putString("item_"+i, iconID.get(i));
-            }
-            editor.commit();
             iconData.add(new Pair<String, String>(id, imgName));
             mSectionsPagerAdapter.notifyDataSetChanged();
         }
@@ -189,7 +152,6 @@ public class SelectContact extends AppCompatActivity {
             } else {
                 SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
                 Pair<String, String> data = iconData.remove(i);
-                iconID.remove(i);
                 sharedPreferences.edit().remove(data.first).apply();
                 (new File(data.second)).delete();
                 mSectionsPagerAdapter.notifyDataSetChanged();
@@ -216,27 +178,33 @@ public class SelectContact extends AppCompatActivity {
             return fragment;
         }
 
+        View.OnClickListener callButtonListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                binder.getService().restartListening(v.getTag().toString());
+                Intent intent = new Intent(context, MainActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString(USER_PASSWORD, iconInfo.first);
+                bundle.putString(USER_ICON_PATH, iconInfo.second);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
+        };
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_select_contact, container, false);
             ImageView imageView = rootView.findViewById(R.id.icon);
             TextView textView = rootView.findViewById(R.id.tvID);
+
             Bitmap bmp = BitmapFactory.decodeFile(iconInfo.second);
             imageView.setImageBitmap(bmp);
+
             textView.setText(iconInfo.first);
             Button button = rootView.findViewById(R.id.callButton);
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(context, MainActivity.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putString("password", iconInfo.first);
-                    bundle.putString("Bitmap Path", iconInfo.second);
-                    intent.putExtras(bundle);
-                    startActivity(intent);
-                }
-            });
+            button.setTag(iconInfo.first);
+            button.setOnClickListener(callButtonListener);
             return rootView;
         }
 

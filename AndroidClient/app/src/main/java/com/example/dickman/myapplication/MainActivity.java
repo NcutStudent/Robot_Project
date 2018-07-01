@@ -24,6 +24,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -36,6 +37,9 @@ import java.net.DatagramSocket;
 
 import static com.example.dickman.myapplication.Util.PhoneKey;
 import static com.example.dickman.myapplication.Util.RaspberryKey;
+import static com.example.dickman.myapplication.Util.TEMP_FILE;
+import static com.example.dickman.myapplication.Util.USER_ICON_PATH;
+import static com.example.dickman.myapplication.Util.USER_PASSWORD;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -93,12 +97,12 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if(intent.getAction().equals(getString(R.string.miss_connection))){
-                clickcall_end(null);
+                click_call_end(null);
             } else if (intent.getAction().equals(getString(R.string.answer_call))) {
                 new Thread(new StartCommuication(binder)).start();
-                Toast.makeText(MainActivity.this, "communication start", Toast.LENGTH_SHORT);
+                Toast.makeText(MainActivity.this, "communication start", Toast.LENGTH_SHORT).show();
             } else if (intent.getAction().equals(getString(R.string.hang_up))) {
-                clickcall_end(null);
+                click_call_end(null);
             }
         }
     };
@@ -108,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
-
             binder = (PhoneAnswerListener.LocalBinder) service;
         }
 
@@ -128,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         surfaceView  = findViewById(R.id.image);
 
         passEdit.setEnabled(false);
-        passEdit.setText(getIntent().getExtras().getString("password"));
+        passEdit.setText(getIntent().getExtras().getString(USER_PASSWORD));
 
         int _SDK_INT = android.os.Build.VERSION.SDK_INT;
         if (_SDK_INT > 8)
@@ -137,6 +140,54 @@ public class MainActivity extends AppCompatActivity {
                     .permitAll().build();
             StrictMode.setThreadPolicy(policy);
         }
+
+        final Button call_button = findViewById(R.id.call_button),
+                end_button = findViewById(R.id.end_button);
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                PhoneAnswerListener phoneAnswerListener;
+                while(true) {
+                    if(binder == null) {
+                            Thread.sleep(100);
+                        continue;
+                    }
+                    phoneAnswerListener = binder.getService();
+                    break;
+                }
+                while(!phoneAnswerListener.isInit()) { Thread.sleep(100); } ;
+                if(phoneAnswerListener.isPasswordError()) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "password error", Toast.LENGTH_SHORT).show();
+                            getSharedPreferences(TEMP_FILE, MODE_PRIVATE).edit()
+                                    .putString(USER_PASSWORD, null)
+                                    .putString(USER_ICON_PATH, null)
+                                    .apply();
+                        }
+                    });
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        call_button.setEnabled(true);
+                        end_button.setEnabled(true);
+                    }
+                });
+                getSharedPreferences(TEMP_FILE, MODE_PRIVATE).edit()
+                        .putString(USER_PASSWORD, getIntent().getExtras().getString(USER_PASSWORD))
+                        .putString(USER_ICON_PATH, getIntent().getExtras().getString(USER_ICON_PATH))
+                        .apply();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
 
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -203,19 +254,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void clickcall_start(View view) {
+    public void click_call_start(View view) {
         PhoneAnswerListener phoneAnswerListener = binder.getService();
         if(!phoneAnswerListener.isInit()){
             Toast.makeText(this, "wait for program init", Toast.LENGTH_SHORT).show();
         } else if(phoneAnswerListener.isPasswordError()) {
-            new Thread(new InitService(passEdit.getText().toString(), binder)).start();
+            Toast.makeText(this, "password error", Toast.LENGTH_SHORT).show();
+            finish();
         } else {
             phoneAnswerListener.makeACall();
             Toast.makeText(this, "calling", Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void clickcall_end(View view) {
+    public void click_call_end(View view) {
         synchronized (audioLock) {
 
             if (audio != null || video != null) {
@@ -278,8 +330,8 @@ public class MainActivity extends AppCompatActivity {
             }
             while(phoneAnswerListener.isInit());
             if(!phoneAnswerListener.isPasswordError()) {
-                getSharedPreferences("settings", MODE_PRIVATE).edit()
-                        .putString("password", password)
+                getSharedPreferences(TEMP_FILE, MODE_PRIVATE).edit()
+                        .putString(USER_PASSWORD, password)
                         .apply();
             }
         }

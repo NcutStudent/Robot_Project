@@ -70,7 +70,7 @@ public class PhoneAnswerListener extends Service {
         @Override
         public void run() {
 
-            if(tcp_connect == null || !tcp_connect.isConnect()) {
+            if(tcp_connect == null) {
                 try {
                     tcp_connect = new TCP_Connect(serverHost, serverPort, serverUdpPort);
                 } catch (IOException e) {
@@ -135,6 +135,7 @@ public class PhoneAnswerListener extends Service {
                                 intent.setAction(getString(R.string.answer_call));
                                 sendBroadcast(intent);
                             }
+
                         } else if (answerCall) {
                             if(loseConnectionCount > 2) {
                                 hangUpCall = true;

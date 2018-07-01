@@ -4,6 +4,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -11,8 +13,12 @@ import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 
 import com.example.dickman.myapplication.service.PhoneAnswerListener;
+
+import static com.example.dickman.myapplication.Util.TEMP_FILE;
+import static com.example.dickman.myapplication.Util.USER_ICON_PATH;
 
 public class OnPhoneCallActivity extends AppCompatActivity {
     MediaPlayer player;
@@ -43,11 +49,16 @@ public class OnPhoneCallActivity extends AppCompatActivity {
         player = MediaPlayer.create(this, R.raw.out);
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
+        String path = getSharedPreferences(TEMP_FILE, MODE_PRIVATE).getString(USER_ICON_PATH, null);
+        Bitmap bmp = BitmapFactory.decodeFile(path);
+        if(bmp != null) {
+            ((ImageView)findViewById(R.id.icon)).setImageBitmap(bmp);
+        }
+
         player.setLooping(true);
         player.start();
         Intent intent = new Intent(this, PhoneAnswerListener.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-
     }
 
     @Override

@@ -15,8 +15,11 @@ public class Util {
     final static String NO_OVERRIDE = "NO_OVERRIDE";
     final static String YES_OVERRIDE = "YES_OVERRIDE";
     final static String OVERRIDE = "OVERRIDE";
-    final static String ICONIDList = "ICONIDList";
-    final static String ICONIDNAME = "ICONIDNAME";
+    final static String CONTACT_INFO = "CONTACT_INFO";
+    final static String CONTACT_INFO_COUNT = "CONTACT_INFO_COUNT";
+    final static String USER_ICON_PATH = "BITMAP_PATH";
+    final static String USER_PASSWORD = "PREFERENCES_PASSWORD";
+    final static String TEMP_FILE = "TEMP_DATA";
 
     final static int ADD_CONTACT_CODE = 1232;
 

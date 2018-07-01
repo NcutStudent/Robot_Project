@@ -13,7 +13,7 @@ import java.net.InetAddress;
 
 
 public class TCP_Connect {
-    private Socket clientSocket;//客戶端的socket
+    private int serverPort;
     private int serverUdpPort;
     private OutputStream bw;//取得網路輸出串流
     private InputStream br;//取得網路輸入串流
@@ -23,24 +23,27 @@ public class TCP_Connect {
 
     public TCP_Connect(String serverHost, int serverPort, int serverUdpPort) throws IOException {
         serverIp = InetAddress.getByName(serverHost);
+        this.serverPort = serverPort;
         this.serverUdpPort = serverUdpPort;
-        clientSocket = new Socket(serverIp, serverPort);
-        clientSocket.setSoTimeout(1000);
-        bw = clientSocket.getOutputStream();// 取得網路輸出串流
-        br = clientSocket.getInputStream();//取得網路輸入串流
         socket = new DatagramSocket();
     }
 
     public boolean inputPassword(String pass) {
         try {
+            Socket clientSocket = new Socket(serverIp, serverPort);
+            clientSocket.setSoTimeout(1000);
+            bw = clientSocket.getOutputStream();// 取得網路輸出串流
+            br = clientSocket.getInputStream();//取得網路輸入串流
             bw.write(pass.getBytes());
             byte[] buffer = new byte[256];
             int length = br.read(buffer);
             String data = new String(buffer, 0, length);
             if(data.length() < 16){
+                clientSocket.close();
                 return false;
             }
             token = data;
+            clientSocket.close();
             return true;
         } catch (IOException e) {
             return false;
@@ -93,9 +96,5 @@ public class TCP_Connect {
         }catch (IOException e) {
             return "0.0.0.0 0";
         }
-    }
-
-    public boolean isConnect() {
-        return clientSocket.isConnected();
     }
 }

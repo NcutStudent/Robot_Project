@@ -108,7 +108,6 @@ public class AddContact extends AppCompatActivity {
                     }
                 }
                 chooseMethod.cancel();
-
             }
         });
     }
@@ -131,7 +130,6 @@ public class AddContact extends AppCompatActivity {
         DialogInterface.OnClickListener onClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
                 add(NO_OVERRIDE);
             }
         };
@@ -163,9 +161,8 @@ public class AddContact extends AppCompatActivity {
         }
         String imgName = tvInputId.getText().toString() + ".png";
         mypath = new File(directory, imgName);
-        FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(mypath);
+            FileOutputStream fos = new FileOutputStream(mypath);
             boolean i = bmp.compress(Bitmap.CompressFormat.PNG, 70, fos);
             fos.close();
         } catch (IOException e) {
