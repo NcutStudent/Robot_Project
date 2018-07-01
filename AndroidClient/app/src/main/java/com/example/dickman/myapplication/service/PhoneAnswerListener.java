@@ -1,34 +1,26 @@
 package com.example.dickman.myapplication.service;
 
-import android.app.IntentService;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.os.Binder;
-import android.os.Handler;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
-import com.example.dickman.myapplication.MainActivity;
 import com.example.dickman.myapplication.R;
-import com.example.dickman.myapplication.broadcast.PhoneBroadCastListener;
 import com.example.dickman.myapplication.network.TCP_Connect;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.sql.Time;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeoutException;
+
+import static com.example.dickman.myapplication.Util.serverHost;
+import static com.example.dickman.myapplication.Util.serverPort;
+import static com.example.dickman.myapplication.Util.serverUdpPort;
 
 /**
  * Created by HatsuneMiku on 2018/3/28.
@@ -54,6 +46,7 @@ public class PhoneAnswerListener extends Service {
     boolean initFinish  = false;
     boolean passwordError = false;
     long soTimeout = 20000;
+    String bitmapPath;
 
     class ServiceMainThread extends Thread {
         boolean isRunning = false;
@@ -69,11 +62,15 @@ public class PhoneAnswerListener extends Service {
 
             if(tcp_connect == null) {
                 try {
-                    tcp_connect = new TCP_Connect(MainActivity.serverHost, MainActivity.serverPort, MainActivity.serverUdpPort);
+                    tcp_connect = new TCP_Connect(serverHost, serverPort, serverUdpPort);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    initFinish = true;
+                    passwordError = true;
+                    return;
                 }
             }
+
             if(tcp_connect.inputPassword(password)) {
                 initFinish = true;
                 do {
@@ -115,21 +112,29 @@ public class PhoneAnswerListener extends Service {
                             sendBroadcast(intent);
                         }
                         else if(isCalling) {
+                            try {
+                                socket.receive(pk);
+                                if (pk.getLength() > 1) {
+                                    continue;
+                                }
+                                if (b[offset] == HANG_UP_CALL) {
+                                    hangUpCall = true;
+
+                                    continue;
+                                } else if (b[offset] == ALIVE_CALL || b[offset] == ON_PHONE_CALL) {
+                                    isCalling = false;
+                                    answerCall = true;
+                                    Intent intent = new Intent();
+                                    intent.setAction(getString(R.string.answer_call));
+                                    sendBroadcast(intent);
+                                    continue;
+                                }
+                            }catch (Exception ignored) {
+                            }
+
                             b[offset] = ON_PHONE_CALL;
                             socket.send(icmp);
-                            socket.receive(pk);
-                            if(pk.getLength() > 1) {
-                                continue;
-                            }
-                            if(b[offset] == HANG_UP_CALL) {
-                                hangUpCall = true;
-                            } else if(b[offset] == ALIVE_CALL || b[offset] == ON_PHONE_CALL) {
-                                isCalling = false;
-                                answerCall = true;
-                                Intent intent = new Intent();
-                                intent.setAction(getString(R.string.answer_call));
-                                sendBroadcast(intent);
-                            }
+
                         } else if (answerCall) {
                             if(loseConnectionCount > 2) {
                                 hangUpCall = true;
@@ -170,10 +175,17 @@ public class PhoneAnswerListener extends Service {
                             } else if (!haveCall && b[offset] == ON_PHONE_CALL) {
                                 Intent onPhoneCallIntent = new Intent();
                                 onPhoneCallIntent.setAction(getString(R.string.on_phone_call));
+                                Bundle bundle = new Bundle();
+                                bundle.putString("Bitmap Path", bitmapPath);
+                                onPhoneCallIntent.putExtras(bundle);
                                 sendBroadcast(onPhoneCallIntent);
                                 synchronized (PhoneAnswerListener.this) {
                                     haveCall = true;
                                 }
+                            } else if (b[offset] == HANG_UP_CALL) {
+                                Intent intent = new Intent();
+                                intent.setAction(getString(R.string.hang_up));
+                                sendBroadcast(intent);
                             }
                             if (!haveCall) {
                                 activeUdpPortCount += 1;
@@ -230,8 +242,15 @@ public class PhoneAnswerListener extends Service {
         passwordError = false;
     }
 
+    public synchronized void restartListeningWithCheck(String password) {
+        if(this.password.equals(password)) {
+            return;
+        }
+        restartListening(password);
+    }
+
     public void answerPhoneCall(boolean answer) {
-        if(socket != null && haveCall) {
+        if(socket != null && (haveCall || isCalling())) {
             if(answer) {
                 answerCall = true;
             } else {
@@ -248,12 +267,20 @@ public class PhoneAnswerListener extends Service {
         return initFinish;
     }
 
+    public boolean isCalling() {
+        return isCalling || answerCall;
+    }
+
     public boolean isPasswordError() {
         return passwordError;
     }
 
     public TCP_Connect getTCP_Client() {
         return tcp_connect;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     @Override
@@ -295,5 +322,9 @@ public class PhoneAnswerListener extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         return START_STICKY;
+    }
+
+    public void setBitmapPath(String bitmapPath) {
+        this.bitmapPath = bitmapPath;
     }
 }

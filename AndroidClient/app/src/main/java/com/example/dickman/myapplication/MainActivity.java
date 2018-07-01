@@ -7,47 +7,41 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.dickman.myapplication.network.TCP_Connect;
 import com.example.dickman.myapplication.service.PhoneAnswerListener;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.net.DatagramSocket;
 
+import static com.example.dickman.myapplication.Util.PhoneKey;
+import static com.example.dickman.myapplication.Util.RaspberryKey;
+import static com.example.dickman.myapplication.Util.TEMP_FILE;
+import static com.example.dickman.myapplication.Util.USER_ICON_PATH;
+import static com.example.dickman.myapplication.Util.USER_PASSWORD;
+
 public class MainActivity extends AppCompatActivity {
-    final String PhoneKey = "Phone";
-    final String RaspberryKey = "Raspberry";
-
-    final String PhoneVideoKey = "VideoPhone";
-    final String RaspberryVideoKey = "VideoRaspberry";
-
-    public static final int serverPort = 7777;
-    public static final int serverUdpPort = 8888;
-    public static final int timeout = 0;
-    public static final String serverHost = "140.128.88.166";
 
     private EditText passEdit = null;
     private SurfaceView surfaceView;
@@ -86,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
                         if (packetClass == null)
                             break;
                         outer.audio = new Audio(packetClass.socket, packetClass.cientHost, packetClass.SentPort,
-                                outer.timeout, packetClass.token);
+                                Util.timeout, packetClass.token);
                         break;
                     case ON_VIDEO_START:
                         outer.video = new VideoThread(outer.tcp_connect, outer.cameraDevice, outer.surfaceView.getHolder().getSurface(), 640, 480);
@@ -103,12 +97,12 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if(intent.getAction().equals(getString(R.string.miss_connection))){
-                clickcall_end(null);
+                click_call_end(null);
             } else if (intent.getAction().equals(getString(R.string.answer_call))) {
                 new Thread(new StartCommuication(binder)).start();
-                Toast.makeText(MainActivity.this, "communication start", Toast.LENGTH_SHORT);
+                Toast.makeText(MainActivity.this, "communication start", Toast.LENGTH_SHORT).show();
             } else if (intent.getAction().equals(getString(R.string.hang_up))) {
-                clickcall_end(null);
+                click_call_end(null);
             }
         }
     };
@@ -118,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
-
             binder = (PhoneAnswerListener.LocalBinder) service;
         }
 
@@ -137,7 +130,8 @@ public class MainActivity extends AppCompatActivity {
         passEdit      = findViewById(R.id.editText);
         surfaceView  = findViewById(R.id.image);
 
-
+        passEdit.setEnabled(false);
+        passEdit.setText(getIntent().getExtras().getString(USER_PASSWORD));
 
         int _SDK_INT = android.os.Build.VERSION.SDK_INT;
         if (_SDK_INT > 8)
@@ -146,6 +140,59 @@ public class MainActivity extends AppCompatActivity {
                     .permitAll().build();
             StrictMode.setThreadPolicy(policy);
         }
+
+        final Button call_button = findViewById(R.id.call_button),
+                end_button = findViewById(R.id.end_button);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                PhoneAnswerListener phoneAnswerListener;
+                while(true) {
+                    if(binder == null) {
+                        Thread.sleep(100);
+                        continue;
+                    }
+                    phoneAnswerListener = binder.getService();
+                    break;
+                }
+                if(getIntent().getExtras().getString(USER_PASSWORD) != null)
+                    phoneAnswerListener.restartListeningWithCheck(getIntent().getExtras().getString(USER_PASSWORD));
+                while(!phoneAnswerListener.isInit()) { Thread.sleep(100); }
+                if(phoneAnswerListener.isPasswordError()) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "password error or network unavailable", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    getSharedPreferences(TEMP_FILE, MODE_PRIVATE).edit()
+                            .putString(USER_PASSWORD, null)
+                            .putString(USER_ICON_PATH, null)
+                            .apply();
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        passEdit.setText(binder.getService().getPassword());
+                        call_button.setEnabled(true);
+                        end_button.setEnabled(true);
+                    }
+                });
+                if(getIntent().getExtras().getString(USER_PASSWORD) == null) {
+                    return;
+                }
+
+                getSharedPreferences(TEMP_FILE, MODE_PRIVATE).edit()
+                    .putString(USER_PASSWORD, getIntent().getExtras().getString(USER_PASSWORD))
+                    .putString(USER_ICON_PATH, getIntent().getExtras().getString(USER_ICON_PATH))
+                    .apply();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
 
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -212,23 +259,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void clickcall_start(View view) {
+    public void click_call_start(View view) {
         PhoneAnswerListener phoneAnswerListener = binder.getService();
         if(!phoneAnswerListener.isInit()){
             Toast.makeText(this, "wait for program init", Toast.LENGTH_SHORT).show();
         } else if(phoneAnswerListener.isPasswordError()) {
-            new Thread(new InitService(passEdit.getText().toString(), binder)).start();
+            Toast.makeText(this, "password error", Toast.LENGTH_SHORT).show();
+            finish();
         } else {
             phoneAnswerListener.makeACall();
             Toast.makeText(this, "calling", Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void clickcall_end(View view) {
+    public void click_call_end(View view) {
         synchronized (audioLock) {
 
-            if (audio != null || video != null) {
-                PhoneAnswerListener phoneAnswerListener = binder.getService();
+            PhoneAnswerListener phoneAnswerListener = binder.getService();
+            if(phoneAnswerListener.isCalling()) {
                 phoneAnswerListener.answerPhoneCall(false);
             }
 
@@ -287,8 +335,8 @@ public class MainActivity extends AppCompatActivity {
             }
             while(phoneAnswerListener.isInit());
             if(!phoneAnswerListener.isPasswordError()) {
-                getSharedPreferences("settings", MODE_PRIVATE).edit()
-                        .putString("password", password)
+                getSharedPreferences(TEMP_FILE, MODE_PRIVATE).edit()
+                        .putString(USER_PASSWORD, password)
                         .apply();
             }
         }
@@ -322,6 +370,7 @@ public class MainActivity extends AppCompatActivity {
                         msg.arg1 = MyHandler.ON_AUDIO_START;
                         msg.setData(bundle);
                         mHandler.sendMessage(msg);
+                        binder.getService().setBitmapPath(getIntent().getExtras().getString("Bitmap Path"));
 
                         CameraManager manager = ((CameraManager) getSystemService(Context.CAMERA_SERVICE));
                         try {
@@ -372,7 +421,3 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
-
-
-
-
