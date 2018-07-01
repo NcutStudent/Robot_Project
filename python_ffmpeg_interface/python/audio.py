@@ -53,9 +53,9 @@ class Audio_Capture:
             except error:
                 pass
  
-            if len(self.recieveBuffer) > 10:
+            if len(self.recieveBuffer) > 3:
                 self.flag = True
-            if len(self.recieveBuffer) < 2:
+            if len(self.recieveBuffer) < 1:
                 self.flag = False
 
     def start(self):

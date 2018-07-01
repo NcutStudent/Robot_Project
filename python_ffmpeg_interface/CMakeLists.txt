@@ -57,6 +57,8 @@ if((Boost_FOUND) AND (OpenCV_FOUND) AND (FFMPEG_FOUND) AND (PYTHONLIBS_FOUND))
     configure_file(python/camera.py camera.py COPYONLY)
     configure_file(python/audio.py audio.py COPYONLY)
     configure_file(python/gui.py gui.py COPYONLY)
+    configure_file(python/tx2_gpio.py tx2_gpio.py COPYONLY)
+    configure_file(python/tx2_pin.py tx2_pin.py COPYONLY)
     
     add_library(FaceDetected SHARED include/FaceDetected.h src/FaceDetected.cpp)
     target_link_libraries(FaceDetected dlib::dlib_shared ${OpenCV_LIBS})
