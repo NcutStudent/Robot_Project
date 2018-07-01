@@ -70,16 +70,15 @@ public class PhoneAnswerListener extends Service {
         @Override
         public void run() {
 
-            if(tcp_connect == null) {
+            if(tcp_connect == null || !tcp_connect.isConnect()) {
                 try {
                     tcp_connect = new TCP_Connect(serverHost, serverPort, serverUdpPort);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    return;
                 }
             }
-            if(tcp_connect == null) {
-                return;
-            }
+
             if(tcp_connect.inputPassword(password)) {
                 initFinish = true;
                 do {

@@ -94,4 +94,8 @@ public class TCP_Connect {
             return "0.0.0.0 0";
         }
     }
+
+    public boolean isConnect() {
+        return clientSocket.isConnected();
+    }
 }
