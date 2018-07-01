@@ -17,7 +17,6 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,6 +37,15 @@ import java.util.Map;
 import static com.example.dickman.myapplication.Util.*;
 
 public class SelectContact extends AppCompatActivity {
+
+    static class Pair<T, S> {
+        final T first;
+        S second;
+        Pair(T first, S second) {
+            this.first = first;
+            this.second = second;
+        }
+    }
 
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
@@ -89,6 +97,7 @@ public class SelectContact extends AppCompatActivity {
             Intent intent = new Intent(this, MainActivity.class);
             Bundle bundle = new Bundle();
             bundle.putString(USER_PASSWORD, pas);
+            bundle.putString(USER_ICON_PATH, getSharedPreferences(TEMP_FILE, MODE_PRIVATE).getString(USER_ICON_PATH, null));
             intent.putExtras(bundle);
             startActivity(intent);
         }
@@ -114,21 +123,25 @@ public class SelectContact extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == ADD_CONTACT_CODE && resultCode == Activity.RESULT_OK) {
             Bundle bundle = data.getExtras();
-            String override = bundle.getString(OVERRIDE);
-            if(override.equals(YES_OVERRIDE)){
-                SharedPreferences sharedPreferences_remove = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
-                int i = iconData.indexOf(bundle.getString(USER_ID));
-                Pair<String, String> data_remove = iconData.remove(i);
-                sharedPreferences_remove.edit().remove(data_remove.first).apply();
-                //(new File(data_remove.second)).delete();
-                mSectionsPagerAdapter.notifyDataSetChanged();
+
+            SharedPreferences sharedPreferences_remove = getSharedPreferences(SHARED_PREFERENCES, MODE_PRIVATE);
+            int i;
+            String id = bundle.getString(USER_ID);
+            for(i = 0; i < iconData.size(); ++i) {
+                if(iconData.get(i).first.equals(id)) {
+                    break;
+                }
+            }
+            if(i == iconData.size()) {
+                iconData.add(new Pair<String, String>(id, null));
             }
 
-            String id = bundle.getString(USER_ID);
+            mSectionsPagerAdapter.notifyDataSetChanged();
+
             String imgName = bundle.getString(IMAGE_PATH);
             SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE);
             sharedPreferences.edit().putString(id, imgName).apply();
-            iconData.add(new Pair<String, String>(id, imgName));
+            iconData.get(i).second = imgName;
             mSectionsPagerAdapter.notifyDataSetChanged();
         }
     }
@@ -198,6 +211,7 @@ public class SelectContact extends AppCompatActivity {
             ImageView imageView = rootView.findViewById(R.id.icon);
             TextView textView = rootView.findViewById(R.id.tvID);
 
+            if(iconInfo == null) return rootView;
             Bitmap bmp = BitmapFactory.decodeFile(iconInfo.second);
             imageView.setImageBitmap(bmp);
 

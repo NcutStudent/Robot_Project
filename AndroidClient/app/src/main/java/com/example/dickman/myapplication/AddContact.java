@@ -77,7 +77,7 @@ public class AddContact extends AppCompatActivity {
                     startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_PICK_IMAGE);
                 } else if(position == 1) {
                     if (ActivityCompat.checkSelfPermission(AddContact.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ) {
-                        requestPermissions(new String[]{new String(Manifest.permission.CAMERA)}, 0);
+                        requestPermissions(new String[]{Manifest.permission.CAMERA}, 0);
                     } else {
                         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                         File newFile = new File(AddContact.this.getFilesDir(), TEMP_IMAGE_NAME);
@@ -130,7 +130,8 @@ public class AddContact extends AppCompatActivity {
         DialogInterface.OnClickListener onClickListener = new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                add(NO_OVERRIDE);
+                setResult(RESULT_CANCELED,null);
+                AddContact.this.finish();
             }
         };
         if(isIdExist != null) {
@@ -140,7 +141,7 @@ public class AddContact extends AppCompatActivity {
             builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
-                    add(YES_OVERRIDE);
+                    returnDataAndFinish();
                 }
             });
             builder.setNegativeButton(R.string.cancel, null);
@@ -150,7 +151,7 @@ public class AddContact extends AppCompatActivity {
         }
     }
 
-    private void add(String override) {
+    private void returnDataAndFinish() {
         selectImage.setEnabled(false);
         submitButton.setEnabled(false);
         tvInputId.setEnabled(false);
@@ -173,7 +174,6 @@ public class AddContact extends AppCompatActivity {
         Bundle bundle = new Bundle();
         bundle.putString(USER_ID, tvInputId.getText().toString());
         bundle.putString(IMAGE_PATH, mypath.getAbsolutePath());
-        bundle.putString(OVERRIDE,override);
         intent.putExtras(bundle);
         setResult(RESULT_OK,intent);
         AddContact.this.finish();

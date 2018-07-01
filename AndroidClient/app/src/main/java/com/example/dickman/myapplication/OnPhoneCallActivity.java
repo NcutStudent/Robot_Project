@@ -1,8 +1,10 @@
 package com.example.dickman.myapplication;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -40,6 +42,14 @@ public class OnPhoneCallActivity extends AppCompatActivity {
         }
     };
 
+    BroadcastReceiver reciveCallStatues = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            hangUp(null);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,11 +69,16 @@ public class OnPhoneCallActivity extends AppCompatActivity {
         player.start();
         Intent intent = new Intent(this, PhoneAnswerListener.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
+        IntentFilter broadCastIntentFitter = new IntentFilter();
+        broadCastIntentFitter.addAction(getString(R.string.hang_up));
+        registerReceiver(reciveCallStatues, broadCastIntentFitter);
     }
 
     @Override
     protected void onDestroy() {
         unbindService(mConnection);
+        unregisterReceiver(reciveCallStatues);
         super.onDestroy();
     }
 

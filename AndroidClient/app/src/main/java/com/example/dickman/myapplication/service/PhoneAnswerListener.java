@@ -1,36 +1,26 @@
 package com.example.dickman.myapplication.service;
 
-import android.app.IntentService;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.os.Binder;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
-import com.example.dickman.myapplication.MainActivity;
 import com.example.dickman.myapplication.R;
-import com.example.dickman.myapplication.broadcast.PhoneBroadCastListener;
 import com.example.dickman.myapplication.network.TCP_Connect;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.sql.Time;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeoutException;
-import static com.example.dickman.myapplication.Util.*;
+
+import static com.example.dickman.myapplication.Util.serverHost;
+import static com.example.dickman.myapplication.Util.serverPort;
+import static com.example.dickman.myapplication.Util.serverUdpPort;
 
 /**
  * Created by HatsuneMiku on 2018/3/28.
@@ -240,7 +230,7 @@ public class PhoneAnswerListener extends Service {
     }
 
     public void answerPhoneCall(boolean answer) {
-        if(socket != null && haveCall) {
+        if(socket != null && haveCall || isCalling) {
             if(answer) {
                 answerCall = true;
             } else {
@@ -255,6 +245,10 @@ public class PhoneAnswerListener extends Service {
 
     public boolean isInit() {
         return initFinish;
+    }
+
+    public boolean isCalling() {
+        return isCalling;
     }
 
     public boolean isPasswordError() {

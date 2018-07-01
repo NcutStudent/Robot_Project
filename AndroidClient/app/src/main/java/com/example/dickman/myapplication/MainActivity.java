@@ -270,8 +270,8 @@ public class MainActivity extends AppCompatActivity {
     public void click_call_end(View view) {
         synchronized (audioLock) {
 
-            if (audio != null || video != null) {
-                PhoneAnswerListener phoneAnswerListener = binder.getService();
+            PhoneAnswerListener phoneAnswerListener = binder.getService();
+            if(phoneAnswerListener.isCalling()) {
                 phoneAnswerListener.answerPhoneCall(false);
             }
 
