@@ -144,45 +144,50 @@ public class MainActivity extends AppCompatActivity {
         final Button call_button = findViewById(R.id.call_button),
                 end_button = findViewById(R.id.end_button);
 
-
         new Thread(new Runnable() {
             @Override
             public void run() {
-
                 try {
                 PhoneAnswerListener phoneAnswerListener;
                 while(true) {
                     if(binder == null) {
-                            Thread.sleep(100);
+                        Thread.sleep(100);
                         continue;
                     }
                     phoneAnswerListener = binder.getService();
                     break;
                 }
-                while(!phoneAnswerListener.isInit()) { Thread.sleep(100); } ;
+                if(getIntent().getExtras().getString(USER_PASSWORD) != null)
+                    phoneAnswerListener.restartListeningWithCheck(getIntent().getExtras().getString(USER_PASSWORD));
+                while(!phoneAnswerListener.isInit()) { Thread.sleep(100); }
                 if(phoneAnswerListener.isPasswordError()) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(MainActivity.this, "password error", Toast.LENGTH_SHORT).show();
-                            getSharedPreferences(TEMP_FILE, MODE_PRIVATE).edit()
-                                    .putString(USER_PASSWORD, null)
-                                    .putString(USER_ICON_PATH, null)
-                                    .apply();
+                            Toast.makeText(MainActivity.this, "password error or network unavailable", Toast.LENGTH_SHORT).show();
                         }
                     });
+                    getSharedPreferences(TEMP_FILE, MODE_PRIVATE).edit()
+                            .putString(USER_PASSWORD, null)
+                            .putString(USER_ICON_PATH, null)
+                            .apply();
                 }
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        passEdit.setText(binder.getService().getPassword());
                         call_button.setEnabled(true);
                         end_button.setEnabled(true);
                     }
                 });
+                if(getIntent().getExtras().getString(USER_PASSWORD) == null) {
+                    return;
+                }
+
                 getSharedPreferences(TEMP_FILE, MODE_PRIVATE).edit()
-                        .putString(USER_PASSWORD, getIntent().getExtras().getString(USER_PASSWORD))
-                        .putString(USER_ICON_PATH, getIntent().getExtras().getString(USER_ICON_PATH))
-                        .apply();
+                    .putString(USER_PASSWORD, getIntent().getExtras().getString(USER_PASSWORD))
+                    .putString(USER_ICON_PATH, getIntent().getExtras().getString(USER_ICON_PATH))
+                    .apply();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

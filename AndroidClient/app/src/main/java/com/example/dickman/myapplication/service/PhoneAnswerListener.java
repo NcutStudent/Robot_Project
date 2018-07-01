@@ -65,6 +65,8 @@ public class PhoneAnswerListener extends Service {
                     tcp_connect = new TCP_Connect(serverHost, serverPort, serverUdpPort);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    initFinish = true;
+                    passwordError = true;
                     return;
                 }
             }
@@ -110,21 +112,28 @@ public class PhoneAnswerListener extends Service {
                             sendBroadcast(intent);
                         }
                         else if(isCalling) {
+                            try {
+                                socket.receive(pk);
+                                if (pk.getLength() > 1) {
+                                    continue;
+                                }
+                                if (b[offset] == HANG_UP_CALL) {
+                                    hangUpCall = true;
+
+                                    continue;
+                                } else if (b[offset] == ALIVE_CALL || b[offset] == ON_PHONE_CALL) {
+                                    isCalling = false;
+                                    answerCall = true;
+                                    Intent intent = new Intent();
+                                    intent.setAction(getString(R.string.answer_call));
+                                    sendBroadcast(intent);
+                                    continue;
+                                }
+                            }catch (Exception ignored) {
+                            }
+
                             b[offset] = ON_PHONE_CALL;
                             socket.send(icmp);
-                            socket.receive(pk);
-                            if(pk.getLength() > 1) {
-                                continue;
-                            }
-                            if(b[offset] == HANG_UP_CALL) {
-                                hangUpCall = true;
-                            } else if(b[offset] == ALIVE_CALL || b[offset] == ON_PHONE_CALL) {
-                                isCalling = false;
-                                answerCall = true;
-                                Intent intent = new Intent();
-                                intent.setAction(getString(R.string.answer_call));
-                                sendBroadcast(intent);
-                            }
 
                         } else if (answerCall) {
                             if(loseConnectionCount > 2) {
@@ -233,8 +242,15 @@ public class PhoneAnswerListener extends Service {
         passwordError = false;
     }
 
+    public synchronized void restartListeningWithCheck(String password) {
+        if(this.password.equals(password)) {
+            return;
+        }
+        restartListening(password);
+    }
+
     public void answerPhoneCall(boolean answer) {
-        if(socket != null && haveCall || isCalling) {
+        if(socket != null && (haveCall || isCalling())) {
             if(answer) {
                 answerCall = true;
             } else {
@@ -252,7 +268,7 @@ public class PhoneAnswerListener extends Service {
     }
 
     public boolean isCalling() {
-        return isCalling | answerCall;
+        return isCalling || answerCall;
     }
 
     public boolean isPasswordError() {
@@ -261,6 +277,10 @@ public class PhoneAnswerListener extends Service {
 
     public TCP_Connect getTCP_Client() {
         return tcp_connect;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     @Override

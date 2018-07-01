@@ -58,21 +58,30 @@ public class OnPhoneCallActivity extends AppCompatActivity {
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         player = MediaPlayer.create(this, R.raw.out);
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-
-        String path = getSharedPreferences(TEMP_FILE, MODE_PRIVATE).getString(USER_ICON_PATH, null);
-        Bitmap bmp = BitmapFactory.decodeFile(path);
-        if(bmp != null) {
-            ((ImageView)findViewById(R.id.icon)).setImageBitmap(bmp);
-        }
-
         player.setLooping(true);
-        player.start();
+
         Intent intent = new Intent(this, PhoneAnswerListener.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
         IntentFilter broadCastIntentFitter = new IntentFilter();
         broadCastIntentFitter.addAction(getString(R.string.hang_up));
         registerReceiver(reciveCallStatues, broadCastIntentFitter);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String path = getSharedPreferences(TEMP_FILE, MODE_PRIVATE).getString(USER_ICON_PATH, null);
+        Bitmap bmp = BitmapFactory.decodeFile(path);
+        if(bmp != null) {
+            ((ImageView)findViewById(R.id.icon)).setImageBitmap(bmp);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        player.stop();
     }
 
     @Override
@@ -86,14 +95,16 @@ public class OnPhoneCallActivity extends AppCompatActivity {
         Intent intent = new Intent(this,MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.putExtra("startCommunication", true);
-        player.stop();
         phoneAnswerListener.answerPhoneCall(true);
         startActivity(intent);
     }
 
     public void hangUp(View view) {
-        player.stop();
         phoneAnswerListener.answerPhoneCall(false);
-        finish();
+
+        Intent intent = new Intent(this,MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra("startCommunication", false);
+        startActivity(intent);
     }
 }
