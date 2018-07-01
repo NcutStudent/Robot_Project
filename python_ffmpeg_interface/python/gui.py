@@ -75,9 +75,10 @@ class Call_GUI(tk.Frame):
         self.is_calling = True
 
     def action_answer_call(self) :
-        if self.have_call == False and self.is_calling == False:
+        if not self.have_call and not self.have_call:
             return
         self.answer_call = True
+        self.have_call = False
         if self.audio != None :
             self.audio.stop()
 
@@ -102,15 +103,15 @@ class Call_GUI(tk.Frame):
         lose_connection_count = 0
         active_udp_port_count = 0
         while True:
-            if self.hand_pin.get_value() == 1:
-                print("hand pin")
-                self.action_hang_up()
-            elif self.call_pin.get_value() == 1:
-                self.action_call_phone()
-                print("call pin")
-            elif self.ansr_pin.get_value() == 1:
-                print("anser call")
-                self.action_answer_call()
+#            if self.hand_pin.get_value() == 1:
+#                print("hand pin")
+#                self.action_hang_up()
+#            elif self.call_pin.get_value() == 1:
+#                self.action_call_phone()
+#                print("call pin")
+#            elif self.ansr_pin.get_value() == 1:
+#                print("anser call")
+#                self.action_answer_call()
             try:
                 if self.hang_up_call :
                     self.tcp_client.sent_data_to_server(self.icmp_socket, Call_GUI.HANG_UP_CALL, self.sendIcmpKey, self.host_port)
@@ -130,19 +131,24 @@ class Call_GUI(tk.Frame):
                     self.camera = None
 
                 elif self.is_calling :
+                    try:
+                        data = self.icmp_socket.recv(20)
+                        if len(data) > 1:
+                            continue
+                        print("recv data: " + data[0])
+                        if data[0] == Call_GUI.HANG_UP_CALL :
+                            self.hang_up_call = True
+                            continue
+                        elif data[0] == Call_GUI.ALIVE_CALL or data[0] == Call_GUI.ON_PHONE_CALL :
+                            self.have_call = True
+                            self.action_answer_call()
+                            self.is_calling  = False
+                            # parner answer the phone call
+                            print("call alive")
+                            continue
+                    except :
+                        pass
                     self.tcp_client.sent_data_to_server(self.icmp_socket, Call_GUI.ON_PHONE_CALL, self.sendIcmpKey, self.host_port)
-                    data = self.icmp_socket.recv(20)
-                    if len(data) > 1:
-                        continue;
-                    print("recv data: " + data[0])
-                    if data[0] == Call_GUI.HANG_UP_CALL :
-                        self.hang_up_call = True
-                    elif data[0] == Call_GUI.ALIVE_CALL or data[0] == Call_GUI.ON_PHONE_CALL :
-                        self.action_answer_call()
-                        self.is_calling  = False
-                        self.answer_call = True
-                        # parner answer the phone call
-                        print("call alive")
                 elif self.answer_call: 
                     if lose_connection_count > 2 :
                         self.hang_up_call = True
