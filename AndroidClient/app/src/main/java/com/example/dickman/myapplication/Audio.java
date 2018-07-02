@@ -90,7 +90,6 @@ public class Audio extends Thread
                 recorder.read(send_buffer, offset, send_buffer.length - offset);
                 String a = new String(send_buffer, 0, offset);
                 udp_connect.sendBytes(send_buffer);
-
             }
             recieveAudio.close();
         }

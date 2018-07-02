@@ -56,10 +56,6 @@ public class OnPhoneCallActivity extends AppCompatActivity {
         setContentView(R.layout.activity_on_phone_call);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                 | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-        player = MediaPlayer.create(this, R.raw.out);
-        player.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        player.setLooping(true);
-
         Intent intent = new Intent(this, PhoneAnswerListener.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
@@ -76,6 +72,11 @@ public class OnPhoneCallActivity extends AppCompatActivity {
         if(bmp != null) {
             ((ImageView)findViewById(R.id.icon)).setImageBitmap(bmp);
         }
+        player = MediaPlayer.create(this, R.raw.out);
+        player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        player.setLooping(true);
+
+        player.start();
     }
 
     @Override
